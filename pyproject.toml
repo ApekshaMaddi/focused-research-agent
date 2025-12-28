@@ -1,0 +1,11 @@
+[project]
+name = "focused-research-agent"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.128.0",
+    "langgraph>=1.0.5",
+    "streamlit>=1.52.2",
+    "uvicorn>=0.40.0",
+]
