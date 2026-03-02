@@ -38,8 +38,8 @@ def synthesize_answer(state: ResearchState) -> dict:
         answer = (
             f"Question: {question}\n"
             f"Based on the sources, here are the main angles to cover:\n"
-            f"- {bullet_block}\n"
-            f"\n(Week 1 stub synthesis — real summarization comes in Week 2+)"
+            f"{bullet_block}\n"
+            f"(Week 1 stub synthesis — real summarization comes in Week 2+)"
         )
 
     return {
