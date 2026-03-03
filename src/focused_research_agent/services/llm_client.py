@@ -41,6 +41,6 @@ def generate_json(prompt: str) -> dict:
             text=text.replace("'''","")
         final_response = json.loads(text)
     else:
-        raise ValueError("Invalid response from LLM. Please try again.")
+        raise ValueError("LLM not configured (stub mode). Add GROQ_API_KEY or OPENAI_API_KEY.")
     return final_response
 

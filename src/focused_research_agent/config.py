@@ -12,13 +12,14 @@ def get_llm_config():
         "mode": "llm_mode",
         "provider": None,
         "model": os.getenv("LLM_MODEL"),
-        "temperature": float(os.getenv("LLM_TEMPERATURE")) | LLM_TEMPERATURE_DEFAULT,
-        "max_retries": int(os.getenv("MAX_RETRIES")) | MAX_RETRIES_DEFAULT,
+        "temperature": float(os.getenv("LLM_TEMPERATURE"),LLM_TEMPERATURE_DEFAULT) ,
+        "max_retries": int(os.getenv("MAX_RETRIES"),MAX_RETRIES_DEFAULT) ,
     }
 
     if (os.getenv("GROQ_API_KEY") is None) and (os.getenv("OPENAI_API_KEY") is None):
         llm_config = {
             "mode": "stub_mode",
+            "provider": None,
             "model": None,
             "temperature": None,
             "max_retries": None,
