@@ -1,38 +1,38 @@
+
 import os
 from dotenv import load_dotenv
-#Preference given to groq if api keys of both groq and openai are present in .env file
 
 load_dotenv()
 
-LLM_TEMPERATURE_DEFAULT = 0.0
-MAX_RETRIES_DEFAULT = 2
-
 def get_llm_config():
-    llm_config = {
-        "mode": "llm_mode",
-        "provider": None,
-        "model": os.getenv("LLM_MODEL"),
-        "temperature": float(os.getenv("LLM_TEMPERATURE"),LLM_TEMPERATURE_DEFAULT) ,
-        "max_retries": int(os.getenv("MAX_RETRIES"),MAX_RETRIES_DEFAULT) ,
+    provider = os.getenv("LLM_PROVIDER")
+    model = os.getenv("LLM_MODEL")
+    temp_raw = os.getenv("LLM_TEMPERATURE")
+    retries_raw = os.getenv("LLM_MAX_RETRIES")
+    api_key = os.getenv("LLM_API_KEY")
+
+    if ((not provider or not provider.strip())
+            or (not model or not model.strip())
+            or ( not temp_raw or not temp_raw.strip())
+            or (not retries_raw or not retries_raw.strip())
+            or ( not api_key or not api_key.strip())):
+        raise ValueError("Required values must be given in the .env file!")
+
+    try:
+        temperature = float(temp_raw)
+    except ValueError:
+        raise ValueError(f"LLM_TEMPERATURE must be a float. Got: {temp_raw}")
+
+    try:
+        max_retries = int(retries_raw)
+    except ValueError:
+        raise ValueError(f"MAX_RETRIES must be an int. Got: {retries_raw}")
+
+    return {
+        "provider": provider,
+        "model": model,
+        "temperature": temperature,
+        "max_retries": max_retries,
+        "api_key": api_key,
     }
-
-    if (os.getenv("GROQ_API_KEY") is None) and (os.getenv("OPENAI_API_KEY") is None):
-        llm_config = {
-            "mode": "stub_mode",
-            "provider": None,
-            "model": None,
-            "temperature": None,
-            "max_retries": None,
-        }
-
-    elif (os.getenv("GROQ_API_KEY")) and (os.getenv("OPENAI_API_KEY") is None):
-        llm_config["provider"] = "groq"
-
-    elif (os.getenv("GROQ_API_KEY") is None) and (os.getenv("OPENAI_API_KEY")):
-        llm_config["provider"] = "openai"
-
-    elif (os.getenv("GROQ_API_KEY")) and (os.getenv("OPENAI_API_KEY")):
-        llm_config["provider"] = "groq"
-
-    return llm_config
 
