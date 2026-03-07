@@ -37,8 +37,8 @@ def generate_json(prompt: str) -> dict:
     # 2) Try parsing directly first
     try:
         return json.loads(text)
-    except json.JSONDecodeError:
-        pass
+    except json.JSONDecodeError as e:
+        print(e)
 
     # 3) Fallback: extract JSON object/array from surrounding text
     obj_start = text.find("{")
