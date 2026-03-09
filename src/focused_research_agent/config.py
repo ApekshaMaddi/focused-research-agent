@@ -16,7 +16,13 @@ def get_llm_config():
             or ( not temp_raw or not temp_raw.strip())
             or (not retries_raw or not retries_raw.strip())
             or ( not api_key or not api_key.strip())):
-        raise ValueError("Required values must be given in the .env file!")
+        return {
+            "provider": None,
+            "model": None,
+            "temperature": None,
+            "max_retries": None,
+            "api_key": None,
+        }
 
     try:
         temperature = float(temp_raw)
@@ -36,3 +42,33 @@ def get_llm_config():
         "api_key": api_key,
     }
 
+def get_search_config():
+    search_provider = os.getenv("SEARCH_PROVIDER")
+    search_api_key = os.getenv("SEARCH_API_KEY")
+    search_max_results = os.getenv("SEARCH_MAX_RESULTS")
+
+    if ((not search_provider or not search_provider.strip())
+            or (not search_api_key or not search_api_key.strip())
+            or ( not search_max_results or not search_max_results.strip())):
+        return {
+            "provider": None,
+            "api_key": None,
+            "max_results": None,
+        }
+
+    try:
+        search_max_results = int(search_max_results)
+    except ValueError:
+        raise ValueError(f"SEARCH_MAX_RESULTS must be an int. Got: {search_max_results}")
+
+    if search_max_results<=0:
+        raise ValueError("SEARCH_MAX_RESULTS must be a positive integer!")
+
+    if search_provider != "tavily":
+        raise ValueError("Provider must be 'tavily'")
+
+    return {
+        "provider": search_provider,
+        "api_key": search_api_key,
+        "max_results": search_max_results,
+    }
