@@ -16,13 +16,7 @@ def get_llm_config():
             or ( not temp_raw or not temp_raw.strip())
             or (not retries_raw or not retries_raw.strip())
             or ( not api_key or not api_key.strip())):
-        return {
-            "provider": None,
-            "model": None,
-            "temperature": None,
-            "max_retries": None,
-            "api_key": None,
-        }
+        raise ValueError("LLM provider, LLM Model, LLM temperature, number of retries and api key should be given in .env file!")
 
     try:
         temperature = float(temp_raw)
@@ -32,7 +26,7 @@ def get_llm_config():
     try:
         max_retries = int(retries_raw)
     except ValueError:
-        raise ValueError(f"MAX_RETRIES must be an int. Got: {retries_raw}")
+        raise ValueError(f"LLM_MAX_RETRIES must be an int. Got: {retries_raw}")
 
     return {
         "provider": provider,
@@ -50,11 +44,7 @@ def get_search_config():
     if ((not search_provider or not search_provider.strip())
             or (not search_api_key or not search_api_key.strip())
             or ( not search_max_results or not search_max_results.strip())):
-        return {
-            "provider": None,
-            "api_key": None,
-            "max_results": None,
-        }
+        raise ValueError("Search provider, search provider api key and max results should be given in .env file!")
 
     try:
         search_max_results = int(search_max_results)

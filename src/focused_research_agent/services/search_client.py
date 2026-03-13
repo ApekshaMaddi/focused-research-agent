@@ -1,30 +1,41 @@
 from tavily import TavilyClient
 from focused_research_agent.config import get_search_config
 
-def get_config():
-    config = get_search_config()
 
-    if (not "provider" in config) or (not "api_key" in config) or (not "max_results" in config):
-        config =     {
-        "provider": None,
-        "api_key": None,
-        "max_results": None,
-    }
+def get_search_client():
+    search_config = get_search_config()
+    tavily_client = TavilyClient(api_key=search_config["api_key"])
+    return tavily_client
+
+def search(queries: list[str]) -> list[dict]:
+    if len(queries) == 0:
+        raise ValueError("search_client: No queries provided")
 
 
-    return config
+    search_client = get_search_client()
+    search_config = get_search_config()
 
-def call_search_client():
-    search_client_config = get_config()
+    final_search_results = []
+    seen_urls = set()
 
-    # Step 1. Instantiating your TavilyClient
-    tavily_client = TavilyClient(api_key=search_client_config.get("search_api_key"))
 
-    # Step 2. Executing a simple search query
-    response = tavily_client.search("Who is Leo Messi?")
+    for each_query in queries:
+        response = search_client.search(query=each_query,search_depth="basic",max_results=search_config["max_results"])
 
-    # Step 3. That's it! You've done a Tavily Search!
-    print(response)
-
-if __name__ == "__main__":
-    get_config()
+        if isinstance(response, dict) and ("results" in response) and isinstance(response["results"], list):
+            response_results = response["results"]
+            for each_result in response_results:
+                if each_result["url"] in seen_urls:
+                    continue
+                else:
+                 dict_mapping = dict()
+                 dict_mapping["title"]   =  each_result["title"]
+                 dict_mapping["url"]     =  each_result["url"]
+                 dict_mapping["snippet"] =  each_result["content"]
+                 dict_mapping["source"]  =  search_config["provider"]
+                 dict_mapping["score"]   =  each_result["score"]
+                 seen_urls.add(dict_mapping["url"])
+                 final_search_results.append(dict_mapping)
+        else:
+            raise ValueError("search_client: Tavily response missing valid results: {}".format(each_query))
+    return final_search_results
