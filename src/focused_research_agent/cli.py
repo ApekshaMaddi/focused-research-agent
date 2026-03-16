@@ -104,10 +104,34 @@ CITATIONS:
 """.strip()
 
 
+def format_error_output(message)-> str:
+
+    return f"""
+    ==============================
+    STATUS: 
+    Error
+    
+    ERROR: 
+    {message}
+    ==============================
+    """.strip()
+
+
 if __name__ == "__main__":
     user_question = input("What is your question? ").strip()
-    initial_state = make_initial_state(user_question)
-    #
-    final_state = focused_research_agent_graph.invoke(initial_state)
-    print(format_output(final_state))
+    if not user_question:
+        print("Please enter a question.")
+    else:
+
+        initial_state = make_initial_state(user_question)
+
+        try:
+            final_state = focused_research_agent_graph.invoke(initial_state)
+            print(format_output(final_state))
+        except ValueError as e:
+            print(format_error_output(e))
+        except Exception as e:
+            print(format_error_output(f"Unexpected internal error occurred: {e}"))
+
+
 
