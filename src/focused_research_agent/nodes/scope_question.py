@@ -7,6 +7,9 @@ def scope_question(state: ResearchState)->dict:
 
     user_query = (state.get("question") or "").strip()
 
+    if not user_query:
+        raise ValueError("No user query provided!")
+
     scope_question_system_prompt = """
     Return ONLY valid JSON. No markdown. No backticks. No extra text.
 
@@ -30,22 +33,19 @@ def scope_question(state: ResearchState)->dict:
     {user_query}
     """.strip()
 
-    try:
-        response = llm_client.generate_json(question_scope)
-    except ValueError as e:
-        response = {}
+    response = llm_client.generate_json(question_scope)
 
-
-
-    scope = f"Research and summarize: {user_query}"
-    scope_assumptions = []
-    scope_constraints = {}
 
     if isinstance(response,dict) and ("scope" in response ) and ("assumptions" in response) and ("constraints" in response):
+
         if isinstance(response.get("scope"),str) and isinstance(response.get("assumptions"),list) and isinstance(response.get("constraints"),dict):
             scope = response.get("scope")
             scope_assumptions = response.get("assumptions")
             scope_constraints = response.get("constraints")
+        else:
+            raise ValueError("Invalid response obtained from LLM!")
+    else:
+        raise ValueError("Invalid response obtained from LLM!")
 
     return{
         "scope":scope,

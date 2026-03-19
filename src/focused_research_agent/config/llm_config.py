@@ -16,7 +16,7 @@ def get_llm_config():
             or ( not temp_raw or not temp_raw.strip())
             or (not retries_raw or not retries_raw.strip())
             or ( not api_key or not api_key.strip())):
-        raise ValueError("Required values must be given in the .env file!")
+        raise ValueError("LLM provider, LLM Model, LLM temperature, number of retries and api key should be given in .env file!")
 
     try:
         temperature = float(temp_raw)
@@ -26,7 +26,7 @@ def get_llm_config():
     try:
         max_retries = int(retries_raw)
     except ValueError:
-        raise ValueError(f"MAX_RETRIES must be an int. Got: {retries_raw}")
+        raise ValueError(f"LLM_MAX_RETRIES must be an int. Got: {retries_raw}")
 
     return {
         "provider": provider,
@@ -35,4 +35,3 @@ def get_llm_config():
         "max_retries": max_retries,
         "api_key": api_key,
     }
-

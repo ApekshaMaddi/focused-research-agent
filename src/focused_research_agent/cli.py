@@ -1,6 +1,11 @@
 # CLI entrypoint (python -m focused_research_agent.cli)
 from focused_research_agent.state import ResearchState
 from focused_research_agent.graph import focused_research_agent_graph
+from focused_research_agent.config.logger_config import setup_logging
+
+import logging
+logger = logging.getLogger("focused_research_agent.cli")
+
 
 def make_initial_state(question:str) -> ResearchState:
     """
@@ -104,10 +109,37 @@ CITATIONS:
 """.strip()
 
 
+def format_error_output(message)-> str:
+
+    return f"""
+    ==============================
+    STATUS: 
+    Error
+    
+    ERROR: 
+    {message}
+    ==============================
+    """.strip()
+
+
 if __name__ == "__main__":
+    setup_logging()
     user_question = input("What is your question? ").strip()
-    initial_state = make_initial_state(user_question)
-    #
-    final_state = focused_research_agent_graph.invoke(initial_state)
-    print(format_output(final_state))
+    if not user_question:
+        print("Please enter a question.")
+    else:
+
+        initial_state = make_initial_state(user_question)
+
+        try:
+            final_state = focused_research_agent_graph.invoke(initial_state)
+            print(format_output(final_state))
+        except ValueError as e:
+            print(format_error_output(e))
+            logger.error(str(e))
+        except Exception as e:
+            print(format_error_output(f"Unexpected internal error occurred: {e}"))
+            logger.error(str(e))
+
+
 

@@ -2,7 +2,17 @@ from focused_research_agent.state import ResearchState
 
 def synthesize_answer(state: ResearchState) -> dict:
     question = (state.get("question") or "").strip()
-    sources = state.get("sources") or []
+    sources = state.get("sources")
+
+    if not question:
+        raise ValueError("synthesize_answer:No question found")
+
+    if not isinstance(sources, list) or (not sources):
+        raise ValueError("synthesize_answer:No sources found")
+
+    for item in sources:
+            if not isinstance(item, dict):
+                raise ValueError("synthesize_answer:Invalid item found")
 
     citations = list()
     citations_seen = set()
@@ -17,25 +27,26 @@ def synthesize_answer(state: ResearchState) -> dict:
         if len(citations) == 3:
             break
 
-    if not sources:
-        answer = f"I could not find any sources for '{question}'"
-    else:
-        for source in sources:
-            title_name = source.get("title")
-            if title_name and title_name not in titles_seen:
-                titles_seen.add(title_name)
-                titles.append(title_name)
+    if len(citations) < 1:
+        raise ValueError("synthesize_answer:No citations found")
+
+    for source in sources:
+        title_name = source.get("title")
+        if title_name and title_name not in titles_seen:
+            titles_seen.add(title_name)
+            titles.append(title_name)
             if len(titles) == 3:
                 break
 
-        bullet_block = ""
-        for t in titles:
-            bullet_block = bullet_block + "- " + t + "\n"
+    if len(titles) < 1:
+        raise ValueError("synthesize_answer:No titles found")
 
-        if bullet_block == "":
-            bullet_block = "- (no titles available)\n"
+    bullet_block = ""
+    for t in titles:
+        bullet_block = bullet_block + "- " + t + "\n"
 
-        answer = (
+
+    answer = (
             f"Question: {question}\n"
             f"Based on the sources, here are the main angles to cover:\n"
             f"{bullet_block}\n"

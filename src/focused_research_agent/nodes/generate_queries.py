@@ -4,27 +4,7 @@ from focused_research_agent.services import llm_client
 def generate_queries(state: ResearchState) -> dict:
     base = (state.get("scope") or state.get("question") or "").strip().lower()
     if not base:
-        return {"queries": [], "status": "planned"}
-
-    words = base.split()
-
-    queries = list()
-
-    # If it's a very short input like "hi" or "resp"
-    if len(words) <= 2:
-        queries = [
-            f"meaning of {base}",
-            f"{base} usage examples",
-            f"{base} overview",
-        ]
-    else:
-         # For longer questions, keep the original plus a couple variations
-         queries = [
-             base,
-             f"{base} overview",
-             f"{base} key facts",
-             f"{base} examples",
-         ]
+        raise ValueError("No scope or question available for generate_queries")
 
     scope = (state.get("scope") or "").strip().lower()
     user_query =( state.get("question") or "").strip().lower()
@@ -71,27 +51,28 @@ def generate_queries(state: ResearchState) -> dict:
        {user_query}
        """.strip()
 
-    try:
-        response = llm_client.generate_json(question_scope)
-    except ValueError as e:
-        response = {}
-
-
+    response = llm_client.generate_json(question_scope)
 
     if isinstance(response, dict) and ("queries" in response ):
-        llm_queries = response.get("queries")
+        llm_queries = response["queries"]
+    else:
+        raise ValueError("Invalid response or invalid queries format received from generate json")
 
-        if isinstance(response.get("queries"),list):
+    if isinstance(llm_queries,list):
             cleaned_list = []
-            for item in llm_queries:
+    else:
+        raise ValueError("Invalid response from generate json")
+
+    for item in llm_queries:
                 if isinstance(item,str):
                     item = item.strip()
-                    if item:
+                else:
+                    raise ValueError("Queries does not contains string")
+                if item:
                         cleaned_list.append(item)
+    if len(cleaned_list) < 3:
+        raise ValueError("generate_queries: LLM returned fewer than 3 valid queries")
 
-            # Use LLM result only if it produced enough queries
-            if len(cleaned_list) >= 3:
-                queries = cleaned_list
-
+    queries = cleaned_list
 
     return {"queries": queries[:6], "status": "planned"}

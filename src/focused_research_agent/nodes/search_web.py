@@ -1,34 +1,15 @@
 from focused_research_agent.state import ResearchState
-
-def mock_sources() -> list[dict]:
-    return [
-        {
-            "title": "Overview: Topic background and key definitions",
-            "url": "https://example.com/topic-overview",
-            "snippet": "A high-level introduction covering the main concepts...",
-            "source": "stub",
-            "score": None,
-        },
-        {
-            "title": "Key facts and practical details",
-            "url": "https://example.com/topic-key-facts",
-            "snippet": "A short list of important facts, common use cases...",
-            "source": "stub",
-            "score": None,
-        },
-        {
-            "title": "Recent updates and current state of the topic",
-            "url": "https://example.com/topic-recent-updates",
-            "snippet": "A summary of recent developments and changes...",
-            "source": "stub",
-            "score": None,
-        },
-    ]
+from focused_research_agent.services.search_client import search
 
 def search_web(state: ResearchState) -> dict:
-    queries = state.get("queries") or []
+    queries = state.get("queries")
+
+    if not isinstance(queries, list):
+        raise ValueError("search_web: queries must be a list")
 
     if not queries:
-        return {"sources": [], "status": "searched"}
+        raise ValueError("search_web: No queries found")
 
-    return {"sources": mock_sources(), "status": "searched"}
+    search_results =  search(queries)
+
+    return {"sources": search_results, "status": "searched"}
