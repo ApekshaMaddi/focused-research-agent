@@ -1,6 +1,7 @@
 from tavily import TavilyClient
-from focused_research_agent.config import get_search_config
-
+from focused_research_agent.config.search_config import get_search_config
+import logging
+logger = logging.getLogger(__name__)
 
 def get_search_client():
     search_config = get_search_config()

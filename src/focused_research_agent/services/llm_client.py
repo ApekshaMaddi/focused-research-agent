@@ -1,6 +1,10 @@
 import json
 from langchain.chat_models import init_chat_model
-from focused_research_agent.config import get_llm_config
+from focused_research_agent.config.llm_config import get_llm_config
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 def get_llm():
@@ -16,6 +20,7 @@ def get_llm():
     return llm
 
 def generate_json(prompt: str) -> dict:
+
     llm = get_llm()
 
     updated_prompt = prompt + "\nReturn ONLY valid JSON. No markdown. No backticks. No extra text."
@@ -38,7 +43,7 @@ def generate_json(prompt: str) -> dict:
     try:
         return json.loads(text)
     except json.JSONDecodeError as e:
-        print(e)
+        logger.error(f"Invalid JSON from LLM: {e}")
 
     # 3) Fallback: extract JSON object/array from surrounding text
     obj_start = text.find("{")
