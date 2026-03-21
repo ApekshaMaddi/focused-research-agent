@@ -1,5 +1,64 @@
 from focused_research_agent.state import ResearchState
-from focused_research_agent.services import llm_client
+from focused_research_agent.services.llm_factory import get_llm_provider
+from urllib.parse import urlparse
+
+
+
+
+def _extract_domain(url: str) -> str:
+    domain = urlparse(url).netloc.lower().strip()
+
+    if domain.startswith("www."):
+        domain = domain[4:]
+
+    return domain
+
+
+def _matches_domain(domain: str, target: str) -> bool:
+    return domain == target or domain.endswith("." + target)
+
+
+def _get_domain_bonus(domain: str) -> float:
+    if domain.endswith(".gov"):
+        return 4.0
+
+    if domain.endswith(".edu"):
+        return 3.5
+
+    trusted_domains = {
+        "britannica.com": 3.0,
+        "timeanddate.com": 3.0,
+        "metoffice.gov.uk": 3.0,
+        "weather.gov": 3.0,
+        "noaa.gov": 3.0,
+    }
+
+    weak_domains = {
+        "youtube.com": -3.0,
+        "medium.com": -3.0,
+        "reddit.com": -3.0,
+        "quora.com": -3.0,
+        "facebook.com": -3.0,
+        "tiktok.com": -3.0,
+        "instagram.com": -3.0,
+    }
+
+    for trusted_domain, bonus in trusted_domains.items():
+        if _matches_domain(domain, trusted_domain):
+            return bonus
+
+    for weak_domain, penalty in weak_domains.items():
+        if _matches_domain(domain, weak_domain):
+            return penalty
+
+    return 0.0
+
+
+def _get_rank_score(source: dict) -> float:
+    domain = _extract_domain(source["url"])
+    bonus = _get_domain_bonus(domain)
+    return source["score"] + bonus
+
 
 
 def _collect_valid_sources(sources: list[dict]) -> list[dict]:
@@ -12,68 +71,84 @@ def _collect_valid_sources(sources: list[dict]) -> list[dict]:
         title = (item.get("title") or "").strip()
         url = (item.get("url") or "").strip()
         snippet = (item.get("snippet") or "").strip()
+        source_name = (item.get("source") or "").strip()
+        score = item.get("score", 0.0)
 
-        if not title or not url:
+        if not title or not url or not snippet:
             continue
+
+        try:
+            score = float(score)
+        except (TypeError, ValueError):
+            score = 0.0
 
         valid_sources.append(
             {
                 "title": title,
                 "url": url,
                 "snippet": snippet,
+                "source": source_name,
+                "score": score,
             }
         )
 
+    if not valid_sources:
+        return list()
+
+    valid_sources = sorted(valid_sources, key=_get_rank_score, reverse=True)
     return valid_sources
 
 
 def _build_synthesis_prompt(question: str, sources: list[dict]) -> str:
-    source_blocks = list()
+    source_blocks = []
 
-    for i, source in enumerate(sources, start=1):
-        block = (
-            f"Source {i}\n"
+    for index, source in enumerate(sources, start=1):
+        source_block = (
+            f"Source {index}\n"
             f"Title: {source['title']}\n"
             f"URL: {source['url']}\n"
             f"Snippet: {source['snippet']}\n"
         )
-        source_blocks.append(block)
+        source_blocks.append(source_block)
 
     joined_sources = "\n".join(source_blocks)
 
-    prompt = f"""
-Return ONLY valid JSON. No markdown. No backticks. No extra text.
+    return f"""
+ Return ONLY valid JSON. No markdown. No backticks. No extra text.
 
-The JSON MUST have exactly these keys:
-- answer (string)
-- citations (list of 1 to 5 URLs)
+ The JSON MUST have exactly these keys:
+ - answer (string)
+ - citations (list of 1 to 3 URLs)
 
-Rules:
-- Answer the user's question directly and clearly.
-- Use ONLY the sources provided below.
-- Do NOT invent facts.
-- Do NOT invent citations.
-- Every citation URL MUST come exactly from the provided source list.
-- Keep the answer concise but useful.
+ Rules:
+ - Answer the user's question directly in the first sentence.
+ - Then add 2 to 3 short supporting sentences.
+ - Keep the answer clear, natural, and concise.
+ - Avoid repetition.
+ - Prefer the strongest and most trustworthy sources.
+ - Prefer official, educational, scientific, or well-known reference sources when available.
+ - Use ONLY the sources provided below.
+ - Do NOT invent facts.
+ - Do NOT invent citations.
+ - Every citation URL MUST match one of the provided source URLs exactly.
+ - Choose the best 2 to 3 citations, not just any valid citations.
+ - Do NOT mention "sources", "snippets", or "citations" inside the answer.
 
-Example JSON output:
-{{
-  "answer": "Ottawa is the capital of Canada.",
-  "citations": [
-    "https://example.com/source1",
-    "https://example.com/source2"
-  ]
-}}
+ Example JSON output:
+ {{
+   "answer": "An equinox is when day and night are nearly equal in length, while a solstice is when the Sun reaches its highest or lowest point in the sky, creating the longest or shortest day of the year. Equinoxes mark the start of spring and autumn. Solstices mark the start of summer and winter.",
+   "citations": [
+     "https://example.com/source1",
+     "https://example.com/source2"
+   ]
+ }}
 
-User question:
-{question}
+ User question:
+ {question}
 
-Sources:
-{joined_sources}
-""".strip()
-
-    return prompt
-
+ Sources:
+ {joined_sources}
+ """.strip()
 
 def synthesize_answer(state: ResearchState) -> dict:
     question = (state.get("question") or "").strip()
@@ -93,8 +168,9 @@ def synthesize_answer(state: ResearchState) -> dict:
     synthesis_sources = valid_sources[:6]
     allowed_urls = {source["url"] for source in synthesis_sources}
 
+    llm_provider = get_llm_provider()
     prompt = _build_synthesis_prompt(question, synthesis_sources)
-    response = llm_client.generate_json(prompt)
+    response = llm_provider.generate_json(prompt)
 
     if not isinstance(response, dict):
         raise ValueError("synthesize_answer: Invalid response obtained from LLM")
@@ -108,7 +184,7 @@ def synthesize_answer(state: ResearchState) -> dict:
     if not isinstance(citations, list) or not citations:
         raise ValueError("synthesize_answer: Invalid citations obtained from LLM")
 
-    cleaned_citations = []
+    cleaned_citations = list()
     seen_citations = set()
 
     for citation in citations:

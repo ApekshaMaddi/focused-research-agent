@@ -1,5 +1,5 @@
 from focused_research_agent.state import ResearchState
-from focused_research_agent.services import llm_client
+from focused_research_agent.services.llm_factory import get_llm_provider
 
 
 
@@ -33,7 +33,7 @@ def scope_question(state: ResearchState)->dict:
     {user_query}
     """.strip()
 
-    response = llm_client.generate_json(question_scope)
+    response = get_llm_provider().generate_json(question_scope)
 
 
     if isinstance(response,dict) and ("scope" in response ) and ("assumptions" in response) and ("constraints" in response):

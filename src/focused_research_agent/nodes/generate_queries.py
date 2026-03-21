@@ -1,5 +1,5 @@
 from focused_research_agent.state import ResearchState
-from focused_research_agent.services import llm_client
+from focused_research_agent.services.llm_factory import get_llm_provider
 
 def generate_queries(state: ResearchState) -> dict:
     base = (state.get("scope") or state.get("question") or "").strip().lower()
@@ -51,7 +51,7 @@ def generate_queries(state: ResearchState) -> dict:
        {user_query}
        """.strip()
 
-    response = llm_client.generate_json(question_scope)
+    response = get_llm_provider().generate_json(question_scope)
 
     if isinstance(response, dict) and ("queries" in response ):
         llm_queries = response["queries"]
