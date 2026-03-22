@@ -4,10 +4,11 @@ from focused_research_agent.graph import focused_research_agent_graph
 from focused_research_agent.config.logger_config import setup_logging
 
 import logging
+
 logger = logging.getLogger("focused_research_agent.cli")
 
 
-def make_initial_state(question:str) -> ResearchState:
+def make_initial_state(question: str) -> ResearchState:
     """
     Create the starting state for the research agent run.
     """
@@ -15,22 +16,17 @@ def make_initial_state(question:str) -> ResearchState:
     initial_state: ResearchState = {
         "run_id": "",  # set by init_run node
         "question": question,  # user input
-
         # Scoping
         "scope": None,
         "assumptions": None,
         "constraints": None,
-
         # Planning
         "queries": None,
-
         # Search results
         "sources": None,
-
         # Synthesis
         "answer": None,
         "citations": None,
-
         # Operational
         "status": "started",
         "errors": [],
@@ -40,9 +36,8 @@ def make_initial_state(question:str) -> ResearchState:
     return initial_state
 
 
-
-
 def format_queries(queries: list[str] | None) -> str:
+    """Format generated queries for CLI display."""
     if not queries:
         return "(no queries)\n"
 
@@ -52,24 +47,23 @@ def format_queries(queries: list[str] | None) -> str:
 
     return "\n".join(lines) + "\n"
 
-def format_sources(sources: list[dict] | None) -> str:
 
+def format_sources(sources: list[dict] | None) -> str:
+    """Format collected sources for CLI display."""
     if not sources:
         return "(no sources)\n"
 
     else:
         result = []
-        i=1
-        for source in sources:
+        for i, source in enumerate(sources, start=1):
             title = source.get("title") or "No Title"
             url = source.get("url") or "No URL"
-            line = f"{i}. {title} — {url}"
-            result.append(line)
-            i=i+1
-
+            result.append(f"{i}. {title} — {url}")
         return "\n".join(result)
 
+
 def format_citations(citations: list[str] | None):
+    """Format collected sources for CLI display."""
     if not citations:
         return "(no citations)\n"
 
@@ -81,6 +75,7 @@ def format_citations(citations: list[str] | None):
 
 
 def format_output(state: dict) -> str:
+    """Build the final CLI output block from graph state."""
     return f"""
 ==============================
 QUESTION:
@@ -109,7 +104,8 @@ CITATIONS:
 """.strip()
 
 
-def format_error_output(message)-> str:
+def format_error_output(message: str) -> str:
+    """Build the CLI error output block."""
 
     return f"""
     ==============================
@@ -128,7 +124,6 @@ if __name__ == "__main__":
     if not user_question:
         print("Please enter a question.")
     else:
-
         initial_state = make_initial_state(user_question)
 
         try:
@@ -140,6 +135,3 @@ if __name__ == "__main__":
         except Exception as e:
             print(format_error_output(f"Unexpected internal error occurred: {e}"))
             logger.error(str(e))
-
-
-

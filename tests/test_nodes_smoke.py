@@ -1,7 +1,6 @@
-from focused_research_agent.graph import focused_research_agent_graph
+import importlib
+
 from focused_research_agent.state import ResearchState
-import focused_research_agent.services.llm_client as llm_client
-import focused_research_agent.nodes.search_web as search_web_node
 
 
 def make_initial_state(question: str) -> ResearchState:
@@ -21,32 +20,51 @@ def make_initial_state(question: str) -> ResearchState:
     }
 
 
-def fake_generate_json(prompt: str) -> dict:
-    if 'The JSON MUST have exactly these keys:\n- answer (string)\n- citations (list of 1 to 5 URLs)' in prompt:
-        return {
-            "answer": "The test topic can be understood by looking at its overview, rules, and common pitfalls.",
-            "citations": [
-                "https://example.com/overview",
-                "https://example.com/rules",
-                "https://example.com/pitfalls",
-            ],
-        }
+class FakeLLMProvider:
+    def generate_json(self, prompt: str) -> dict:
+        if not isinstance(prompt, str):
+            raise ValueError("Prompt must be a string")
 
-    if 'Return EXACTLY one key: "queries".' in prompt:
-        return {
-            "queries": [
-                "test topic overview",
-                "test topic rules",
-                "test topic examples",
-                "test topic pitfalls",
-            ]
-        }
+        if (
+            '"scope"' in prompt
+            and '"assumptions"' in prompt
+            and '"constraints"' in prompt
+        ):
+            return {
+                "scope": "Explain the test topic clearly",
+                "assumptions": ["User is a beginner", "General context"],
+                "constraints": {
+                    "geography": "Global",
+                    "time_range": "current",
+                    "depth": "intro",
+                },
+            }
 
-    return {
-        "scope": "Explain the test topic clearly",
-        "assumptions": ["User is a beginner", "General context"],
-        "constraints": {"geography": "Global", "time_range": "current", "depth": "intro"},
-    }
+        if 'Return EXACTLY one key: "queries".' in prompt:
+            return {
+                "queries": [
+                    "test topic overview",
+                    "test topic rules",
+                    "test topic examples",
+                    "test topic pitfalls",
+                ]
+            }
+
+        if '"answer"' in prompt and '"citations"' in prompt:
+            return {
+                "answer": (
+                    "The test topic can be understood through its overview, "
+                    "key rules, and common pitfalls. It is useful to start "
+                    "with the basics and then review practical examples."
+                ),
+                "citations": [
+                    "https://example.com/overview",
+                    "https://example.com/rules",
+                    "https://example.com/pitfalls",
+                ],
+            }
+
+        raise ValueError("Unexpected prompt received by FakeLLMProvider")
 
 
 class FakeSearchProvider:
@@ -76,16 +94,30 @@ class FakeSearchProvider:
         ]
 
 
+def fake_get_llm_provider():
+    return FakeLLMProvider()
+
+
 def fake_get_search_provider():
     return FakeSearchProvider()
 
 
 def test_graph_smoke_run(monkeypatch):
-    monkeypatch.setattr(llm_client, "generate_json", fake_generate_json)
-    monkeypatch.setattr(search_web_node, "get_search_provider", fake_get_search_provider)
+    # Patch factories BEFORE importing/reloading graph.py
+    import focused_research_agent.services.llm_factory as llm_factory
+    import focused_research_agent.nodes.search_web as search_web_node
+    import focused_research_agent.graph as graph_module
+
+    monkeypatch.setattr(llm_factory, "get_llm_provider", fake_get_llm_provider)
+    monkeypatch.setattr(
+        search_web_node, "get_search_provider", fake_get_search_provider
+    )
+
+    # Rebuild graph so it captures the fake LLM provider in closures
+    graph_module = importlib.reload(graph_module)
 
     initial_state = make_initial_state("test question")
-    final_state = focused_research_agent_graph.invoke(initial_state)
+    final_state = graph_module.focused_research_agent_graph.invoke(initial_state)
 
     assert final_state["run_id"]
     assert final_state["scope"]
@@ -94,3 +126,4 @@ def test_graph_smoke_run(monkeypatch):
     assert final_state["answer"]
     assert final_state["citations"]
     assert final_state["status"] == "completed"
+    assert not final_state["errors"]

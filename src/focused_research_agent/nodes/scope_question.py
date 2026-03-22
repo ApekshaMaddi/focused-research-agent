@@ -1,14 +1,26 @@
+from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
-from focused_research_agent.services.llm_factory import get_llm_provider
 
 
+def scope_question(state: ResearchState, llm_provider: LLMProvider) -> dict:
+    """Generate focused web-search queries from the scoped question.
 
-def scope_question(state: ResearchState)->dict:
+    This node uses the LLM provider to produce 3 to 6 short,
+    search-engine-style queries that directly support answering the
+    user's question.
 
+    Args:
+        state: The current research state.
+        llm_provider: The active LLM provider instance.
+
+    Returns:
+        dict: A partial state update containing generated queries and
+        status, or an errors field if generation fails.
+    """
     user_query = (state.get("question") or "").strip()
 
     if not user_query:
-        raise ValueError("No user query provided!")
+        return {"errors": ["scope_question: No user query provided"]}
 
     scope_question_system_prompt = """
     Return ONLY valid JSON. No markdown. No backticks. No extra text.
@@ -33,23 +45,46 @@ def scope_question(state: ResearchState)->dict:
     {user_query}
     """.strip()
 
-    response = get_llm_provider().generate_json(question_scope)
+    try:
+        response = llm_provider.generate_json(question_scope)
+    except Exception as e:
+        return {"errors": [f"scope_question failed: {e}"]}
 
+    if not isinstance(response, dict):
+        return {"errors": ["scope_question: Invalid response type received from LLM"]}
 
-    if isinstance(response,dict) and ("scope" in response ) and ("assumptions" in response) and ("constraints" in response):
+    if not all(key in response for key in ("scope", "assumptions", "constraints")):
+        return {"errors": ["scope_question: Missing required keys in LLM response"]}
 
-        if isinstance(response.get("scope"),str) and isinstance(response.get("assumptions"),list) and isinstance(response.get("constraints"),dict):
-            scope = response.get("scope")
-            scope_assumptions = response.get("assumptions")
-            scope_constraints = response.get("constraints")
-        else:
-            raise ValueError("Invalid response obtained from LLM!")
-    else:
-        raise ValueError("Invalid response obtained from LLM!")
+    scope = response.get("scope")
+    assumptions = response.get("assumptions")
+    constraints = response.get("constraints")
 
-    return{
-        "scope":scope,
-        "assumptions": scope_assumptions,
-        "constraints": scope_constraints,
+    if not isinstance(scope, str) or not scope.strip():
+        return {"errors": ["scope_question: 'scope' must be a non-empty string"]}
+
+    if not isinstance(assumptions, list):
+        return {"errors": ["scope_question: 'assumptions' must be a list"]}
+
+    cleaned_assumptions = []
+
+    for item in assumptions:
+        if not isinstance(item, str) or not item.strip():
+            return {
+                "errors": ["scope_question: Assumptions must contain non-empty strings"]
+            }
+
+        cleaned_assumptions.append(item.strip())
+
+    if len(cleaned_assumptions) < 2 or len(cleaned_assumptions) > 5:
+        return {"errors": ["scope_question: 'assumptions' must contain 2 to 5 items"]}
+
+    if not isinstance(constraints, dict):
+        return {"errors": ["scope_question: 'constraints' must be a dict"]}
+
+    return {
+        "scope": scope.strip(),
+        "assumptions": cleaned_assumptions,
+        "constraints": constraints,
         "status": "scoped",
     }
