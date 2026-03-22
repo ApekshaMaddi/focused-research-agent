@@ -1,6 +1,6 @@
 from focused_research_agent.config.search_config import get_search_config
 from focused_research_agent.interfaces.search_interface import SearchProvider
-from focused_research_agent.services.search_client_tavily import TavilySearchClient
+from focused_research_agent.services.search_provider_tavily import TavilySearchClient
 
 
 def get_search_provider() -> SearchProvider:
@@ -9,5 +9,5 @@ def get_search_provider() -> SearchProvider:
 
     if provider == "tavily":
         return TavilySearchClient()
-
-    raise ValueError(f"Unsupported search provider: {provider}")
+    else:
+        raise ValueError(f"Unsupported search provider: {provider}")

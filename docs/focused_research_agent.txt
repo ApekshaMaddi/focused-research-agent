@@ -1,0 +1,4 @@
+Built a CLI-first research agent in Python using LangGraph, with function-based workflow nodes and class-based provider integrations for LLM and web search.
+Applied SOLID selectively through interface-driven provider abstractions, factory-based dependency selection, strict runtime validation, normalized search results,
+and LLM-based answer synthesis with citation control.
+
