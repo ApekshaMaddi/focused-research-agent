@@ -5,6 +5,16 @@ load_dotenv()
 
 
 def get_llm_config():
+    """Load and validate LLM configuration from environment variables.
+
+    Returns:
+        dict: A dictionary containing provider, model, temperature,
+        max_retries, and api_key.
+
+    Raises:
+        ValueError: If a required environment variable is missing or
+        if temperature or max_retries cannot be parsed correctly.
+    """
     provider = os.getenv("LLM_PROVIDER")
     model = os.getenv("LLM_MODEL")
     temp_raw = os.getenv("LLM_TEMPERATURE")

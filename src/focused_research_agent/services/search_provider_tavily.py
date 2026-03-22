@@ -10,11 +10,26 @@ logger = logging.getLogger(__name__)
 
 
 class TavilySearchClient(SearchProvider):
+    """Tavily-backed implementation of the search provider contract."""
+
     def __init__(self):
+        """Initialize the Tavily search client using validated config."""
         self.search_config = get_search_config()
         self.tavily_client = TavilyClient(api_key=self.search_config["api_key"])
 
     def search(self, queries: list[str]) -> list[SearchResult]:
+        """Run Tavily searches and return normalized search results.
+
+        Args:
+            queries: A list of validated search queries.
+
+        Returns:
+            list[SearchResult]: Deduplicated and normalized search results.
+
+        Raises:
+            ValueError: If the query list is invalid or Tavily returns an
+            unexpected response structure.
+        """
 
         if not isinstance(queries, list):
             raise ValueError("TavilySearchClient: queries must be a list")

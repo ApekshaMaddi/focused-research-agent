@@ -5,6 +5,15 @@ load_dotenv()
 
 
 def get_search_config():
+    """Load and validate search configuration from environment variables.
+
+    Returns:
+        dict: A dictionary containing provider, api_key, and max_results.
+
+    Raises:
+        ValueError: If a required environment variable is missing or if
+        SEARCH_MAX_RESULTS is not a positive integer.
+    """
     search_provider = os.getenv("SEARCH_PROVIDER")
     search_api_key = os.getenv("SEARCH_API_KEY")
     search_max_results = os.getenv("SEARCH_MAX_RESULTS")

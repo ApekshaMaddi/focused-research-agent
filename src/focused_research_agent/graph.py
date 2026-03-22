@@ -10,20 +10,26 @@ from focused_research_agent.nodes.finalize_run import finalize_run
 from focused_research_agent.services.llm_factory import get_llm_provider
 from focused_research_agent.nodes.handle_error import handle_error
 
+
 def route_after_node(state: ResearchState) -> str:
     """
     After any node runs, check if errors were recorded.
-    If yes, route to the error handler. Otherwise continue.
+    If yes, route to the error handler. Otherwise, continue.
     """
     if state.get("errors"):
         return "handle_error"
     return "continue"
 
+
 def build_graph():
-    # Build providers ONCE here
+    """Build and compile the LangGraph workflow for the research agent.
+
+    The graph creates the shared LLM provider once, injects it into the
+    LLM-dependent nodes through closures, and uses conditional routing
+    to send error states to the terminal error handler.
+    """
     llm = get_llm_provider()
 
-    # Wrap each node in a closure that captures the provider
     def _scope_question(state):
         return scope_question(state, llm)
 
@@ -47,27 +53,27 @@ def build_graph():
     builder.add_conditional_edges(
         "init_run",
         route_after_node,
-        {"continue": "scope_question", "handle_error": "handle_error"}
+        {"continue": "scope_question", "handle_error": "handle_error"},
     )
     builder.add_conditional_edges(
         "scope_question",
         route_after_node,
-        {"continue": "generate_queries", "handle_error": "handle_error"}
+        {"continue": "generate_queries", "handle_error": "handle_error"},
     )
     builder.add_conditional_edges(
         "generate_queries",
         route_after_node,
-        {"continue": "search_web", "handle_error": "handle_error"}
+        {"continue": "search_web", "handle_error": "handle_error"},
     )
     builder.add_conditional_edges(
         "search_web",
         route_after_node,
-        {"continue": "synthesize_answer", "handle_error": "handle_error"}
+        {"continue": "synthesize_answer", "handle_error": "handle_error"},
     )
     builder.add_conditional_edges(
         "synthesize_answer",
         route_after_node,
-        {"continue": "finalize_run", "handle_error": "handle_error"}
+        {"continue": "finalize_run", "handle_error": "handle_error"},
     )
 
     builder.add_edge("finalize_run", END)

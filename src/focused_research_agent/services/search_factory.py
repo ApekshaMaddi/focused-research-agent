@@ -4,6 +4,14 @@ from focused_research_agent.services.search_provider_tavily import TavilySearchC
 
 
 def get_search_provider() -> SearchProvider:
+    """Return the active search provider implementation.
+
+    Returns:
+        SearchProvider: The configured search provider instance.
+
+    Raises:
+        ValueError: If the configured provider is unsupported.
+    """
     search_config = get_search_config()
     provider = search_config["provider"]
 

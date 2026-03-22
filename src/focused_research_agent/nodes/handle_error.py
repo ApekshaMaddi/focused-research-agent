@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def handle_error(state: ResearchState) -> dict:
     """
     Terminal error node. Logs all recorded errors and marks

@@ -4,7 +4,15 @@ from pathlib import Path
 
 
 def setup_logging():
+    """Configure and return the root logger for the application.
 
+    The logger writes error-level logs to a rotating file in the
+    project's logs directory. If logging has already been configured,
+    the existing logger is returned unchanged.
+
+    Returns:
+        logging.Logger: The configured root logger.
+    """
     LOG_PATH = (
         Path(__file__).parent.parent.parent.parent
         / "logs"

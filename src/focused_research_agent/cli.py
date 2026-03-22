@@ -37,6 +37,7 @@ def make_initial_state(question: str) -> ResearchState:
 
 
 def format_queries(queries: list[str] | None) -> str:
+    """Format generated queries for CLI display."""
     if not queries:
         return "(no queries)\n"
 
@@ -48,7 +49,7 @@ def format_queries(queries: list[str] | None) -> str:
 
 
 def format_sources(sources: list[dict] | None) -> str:
-
+    """Format collected sources for CLI display."""
     if not sources:
         return "(no sources)\n"
 
@@ -62,6 +63,7 @@ def format_sources(sources: list[dict] | None) -> str:
 
 
 def format_citations(citations: list[str] | None):
+    """Format collected sources for CLI display."""
     if not citations:
         return "(no citations)\n"
 
@@ -73,6 +75,7 @@ def format_citations(citations: list[str] | None):
 
 
 def format_output(state: dict) -> str:
+    """Build the final CLI output block from graph state."""
     return f"""
 ==============================
 QUESTION:
@@ -102,6 +105,7 @@ CITATIONS:
 
 
 def format_error_output(message: str) -> str:
+    """Build the CLI error output block."""
 
     return f"""
     ==============================

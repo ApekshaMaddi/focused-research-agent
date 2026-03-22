@@ -8,7 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 class GroqLLMProvider(LLMProvider):
+    """Groq-backed implementation of the LLM provider contract."""
+
     def __init__(self):
+        """Initialize the Groq LLM client using validated config."""
         self.llm_config = get_llm_config()
 
         self.llm = init_chat_model(
@@ -20,6 +23,22 @@ class GroqLLMProvider(LLMProvider):
         )
 
     def generate_json(self, prompt: str) -> dict:
+        """Generate structured JSON from a prompt using Groq.
+
+        The method sends the prompt to the LLM, removes markdown-style
+        code fences if present, and attempts strict JSON parsing with a
+        fallback extraction pass.
+
+        Args:
+            prompt: The prompt to send to the LLM.
+
+        Returns:
+            dict: Parsed JSON output from the LLM.
+
+        Raises:
+            ValueError: If the prompt is invalid or the provider does not
+            return valid JSON.
+        """
 
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("GroqLLMProvider: No prompt provided!")
