@@ -3,7 +3,18 @@ from focused_research_agent.services.llm_factory import get_llm_provider
 from urllib.parse import urlparse
 
 
-
+# Hardcoding a small list of trusted and weak domains is okay as a quick experiment, but it is not a scalable long-term design. An interviewer could absolutely ask that.
+#
+# A good answer in an interview would be:
+#
+# this was a lightweight prototype heuristic to improve citation quality quickly
+# it was never meant to be a complete trust model
+# hardcoding every domain would not scale and would be hard to maintain
+# a better production direction would be:
+# configurable rules in settings/data files
+# broader heuristics based on source type and metadata
+# possibly provider-side ranking/filtering
+# or a separate source-quality evaluation component
 
 def _extract_domain(url: str) -> str:
     domain = urlparse(url).netloc.lower().strip()
@@ -53,6 +64,37 @@ def _get_domain_bonus(domain: str) -> float:
 
     return 0.0
 
+def _is_weak_domain(domain: str) -> bool:
+    weak_domains = {
+        "youtube.com",
+        "medium.com",
+        "reddit.com",
+        "quora.com",
+        "facebook.com",
+        "tiktok.com",
+        "instagram.com",
+    }
+
+    for weak_domain in weak_domains:
+        if _matches_domain(domain, weak_domain):
+            return True
+
+    return False
+
+
+def _filter_sources_for_synthesis(valid_sources: list[dict]) -> list[dict]:
+    strong_or_neutral_sources = []
+
+    for source in valid_sources:
+        domain = _extract_domain(source["url"])
+
+        if not _is_weak_domain(domain):
+            strong_or_neutral_sources.append(source)
+
+    if len(strong_or_neutral_sources) >= 4:
+        return strong_or_neutral_sources
+
+    return valid_sources
 
 def _get_rank_score(source: dict) -> float:
     domain = _extract_domain(source["url"])
