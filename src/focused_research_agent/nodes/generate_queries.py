@@ -1,13 +1,15 @@
+from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
-from focused_research_agent.services.llm_factory import get_llm_provider
 
-def generate_queries(state: ResearchState) -> dict:
+
+
+def generate_queries(state: ResearchState, llm_provider: LLMProvider) -> dict:
     base = (state.get("scope") or state.get("question") or "").strip().lower()
     if not base:
         raise ValueError("No scope or question available for generate_queries")
 
     scope = (state.get("scope") or "").strip().lower()
-    user_query =( state.get("question") or "").strip().lower()
+    user_query = (state.get("question") or "").strip()
     assumptions = state.get("assumptions") or []
     constraints = state.get("constraints") or {}
 
@@ -36,11 +38,7 @@ def generate_queries(state: ResearchState) -> dict:
     }
     """.strip()
 
-    inputs = (
-        f"SCOPE: {scope}\n"
-        f"ASSUMPTIONS: {assumptions}\n"
-        f"CONSTRAINTS: {constraints}"
-    )
+    inputs = f"SCOPE: {scope}\nASSUMPTIONS: {assumptions}\nCONSTRAINTS: {constraints}"
 
     question_scope = f"""
        {generate_queries_system_prompt}
@@ -51,25 +49,28 @@ def generate_queries(state: ResearchState) -> dict:
        {user_query}
        """.strip()
 
-    response = get_llm_provider().generate_json(question_scope)
+    response = llm_provider.generate_json(question_scope)
 
-    if isinstance(response, dict) and ("queries" in response ):
+    if isinstance(response, dict) and ("queries" in response):
         llm_queries = response["queries"]
     else:
-        raise ValueError("Invalid response or invalid queries format received from generate json")
+        raise ValueError(
+            "Invalid response or invalid queries format received from generate json"
+        )
 
-    if isinstance(llm_queries,list):
-            cleaned_list = []
+    if isinstance(llm_queries, list):
+        cleaned_list = []
     else:
         raise ValueError("Invalid response from generate json")
 
     for item in llm_queries:
-                if isinstance(item,str):
-                    item = item.strip()
-                else:
-                    raise ValueError("Queries does not contains string")
-                if item:
-                        cleaned_list.append(item)
+        if isinstance(item, str):
+            item = item.strip()
+        else:
+            raise ValueError("Queries does not contains string")
+        if item:
+            cleaned_list.append(item)
+
     if len(cleaned_list) < 3:
         raise ValueError("generate_queries: LLM returned fewer than 3 valid queries")
 

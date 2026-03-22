@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import  TypedDict
+from typing import TypedDict
 
 
 class SearchResult(TypedDict):
@@ -12,5 +12,4 @@ class SearchResult(TypedDict):
 
 class SearchProvider(ABC):
     @abstractmethod
-    def search(self, queries: list[str]) -> list[SearchResult]:
-        ...
+    def search(self, queries: list[str]) -> list[SearchResult]: ...

@@ -22,7 +22,10 @@ def make_initial_state(question: str) -> ResearchState:
 
 
 def fake_generate_json(prompt: str) -> dict:
-    if 'The JSON MUST have exactly these keys:\n- answer (string)\n- citations (list of 1 to 5 URLs)' in prompt:
+    if (
+        "The JSON MUST have exactly these keys:\n- answer (string)\n- citations (list of 1 to 5 URLs)"
+        in prompt
+    ):
         return {
             "answer": "The test topic can be understood by looking at its overview, rules, and common pitfalls.",
             "citations": [
@@ -45,7 +48,11 @@ def fake_generate_json(prompt: str) -> dict:
     return {
         "scope": "Explain the test topic clearly",
         "assumptions": ["User is a beginner", "General context"],
-        "constraints": {"geography": "Global", "time_range": "current", "depth": "intro"},
+        "constraints": {
+            "geography": "Global",
+            "time_range": "current",
+            "depth": "intro",
+        },
     }
 
 
@@ -82,7 +89,9 @@ def fake_get_search_provider():
 
 def test_graph_smoke_run(monkeypatch):
     monkeypatch.setattr(llm_client, "generate_json", fake_generate_json)
-    monkeypatch.setattr(search_web_node, "get_search_provider", fake_get_search_provider)
+    monkeypatch.setattr(
+        search_web_node, "get_search_provider", fake_get_search_provider
+    )
 
     initial_state = make_initial_state("test question")
     final_state = focused_research_agent_graph.invoke(initial_state)

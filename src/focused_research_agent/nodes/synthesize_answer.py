@@ -1,5 +1,5 @@
+from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
-from focused_research_agent.services.llm_factory import get_llm_provider
 from urllib.parse import urlparse
 
 
@@ -15,6 +15,26 @@ from urllib.parse import urlparse
 # broader heuristics based on source type and metadata
 # possibly provider-side ranking/filtering
 # or a separate source-quality evaluation component
+
+
+_WEAK_DOMAINS = {
+    "youtube.com": -3.0,
+    "medium.com": -3.0,
+    "reddit.com": -3.0,
+    "quora.com": -3.0,
+    "facebook.com": -3.0,
+    "tiktok.com": -3.0,
+    "instagram.com": -3.0,
+}
+
+_TRUSTED_DOMAINS = {
+    "britannica.com": 3.0,
+    "timeanddate.com": 3.0,
+    "metoffice.gov.uk": 3.0,
+    "weather.gov": 3.0,
+    "noaa.gov": 3.0,
+}
+
 
 def _extract_domain(url: str) -> str:
     domain = urlparse(url).netloc.lower().strip()
@@ -36,46 +56,20 @@ def _get_domain_bonus(domain: str) -> float:
     if domain.endswith(".edu"):
         return 3.5
 
-    trusted_domains = {
-        "britannica.com": 3.0,
-        "timeanddate.com": 3.0,
-        "metoffice.gov.uk": 3.0,
-        "weather.gov": 3.0,
-        "noaa.gov": 3.0,
-    }
-
-    weak_domains = {
-        "youtube.com": -3.0,
-        "medium.com": -3.0,
-        "reddit.com": -3.0,
-        "quora.com": -3.0,
-        "facebook.com": -3.0,
-        "tiktok.com": -3.0,
-        "instagram.com": -3.0,
-    }
-
-    for trusted_domain, bonus in trusted_domains.items():
+    for trusted_domain, bonus in _TRUSTED_DOMAINS.items():
         if _matches_domain(domain, trusted_domain):
             return bonus
 
-    for weak_domain, penalty in weak_domains.items():
+    for weak_domain, penalty in _WEAK_DOMAINS.items():
         if _matches_domain(domain, weak_domain):
             return penalty
 
     return 0.0
 
-def _is_weak_domain(domain: str) -> bool:
-    weak_domains = {
-        "youtube.com",
-        "medium.com",
-        "reddit.com",
-        "quora.com",
-        "facebook.com",
-        "tiktok.com",
-        "instagram.com",
-    }
 
-    for weak_domain in weak_domains:
+def _is_weak_domain(domain: str) -> bool:
+
+    for weak_domain in _WEAK_DOMAINS:
         if _matches_domain(domain, weak_domain):
             return True
 
@@ -96,11 +90,11 @@ def _filter_sources_for_synthesis(valid_sources: list[dict]) -> list[dict]:
 
     return valid_sources
 
+
 def _get_rank_score(source: dict) -> float:
     domain = _extract_domain(source["url"])
     bonus = _get_domain_bonus(domain)
     return source["score"] + bonus
-
 
 
 def _collect_valid_sources(sources: list[dict]) -> list[dict]:
@@ -192,7 +186,8 @@ def _build_synthesis_prompt(question: str, sources: list[dict]) -> str:
  {joined_sources}
  """.strip()
 
-def synthesize_answer(state: ResearchState) -> dict:
+
+def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     question = (state.get("question") or "").strip()
     sources = state.get("sources")
 
@@ -210,7 +205,7 @@ def synthesize_answer(state: ResearchState) -> dict:
     synthesis_sources = valid_sources[:6]
     allowed_urls = {source["url"] for source in synthesis_sources}
 
-    llm_provider = get_llm_provider()
+
     prompt = _build_synthesis_prompt(question, synthesis_sources)
     response = llm_provider.generate_json(prompt)
 

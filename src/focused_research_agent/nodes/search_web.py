@@ -5,7 +5,6 @@ from focused_research_agent.state import ResearchState
 def search_web(state: ResearchState) -> dict:
     queries = state.get("queries")
 
-
     if not isinstance(queries, list):
         raise ValueError("search_web: queries must be a list")
 

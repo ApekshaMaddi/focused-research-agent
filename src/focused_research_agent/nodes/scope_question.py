@@ -1,9 +1,8 @@
+from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
-from focused_research_agent.services.llm_factory import get_llm_provider
 
 
-
-def scope_question(state: ResearchState)->dict:
+def scope_question(state: ResearchState, llm_provider: LLMProvider) -> dict:
 
     user_query = (state.get("question") or "").strip()
 
@@ -33,22 +32,32 @@ def scope_question(state: ResearchState)->dict:
     {user_query}
     """.strip()
 
-    response = get_llm_provider().generate_json(question_scope)
+    try:
+        response = llm_provider.generate_json(question_scope)
 
-
-    if isinstance(response,dict) and ("scope" in response ) and ("assumptions" in response) and ("constraints" in response):
-
-        if isinstance(response.get("scope"),str) and isinstance(response.get("assumptions"),list) and isinstance(response.get("constraints"),dict):
-            scope = response.get("scope")
-            scope_assumptions = response.get("assumptions")
-            scope_constraints = response.get("constraints")
+        if (
+            isinstance(response, dict)
+            and ("scope" in response)
+            and ("assumptions" in response)
+            and ("constraints" in response)
+        ):
+            if (
+                isinstance(response.get("scope"), str)
+                and isinstance(response.get("assumptions"), list)
+                and isinstance(response.get("constraints"), dict)
+            ):
+                scope = response.get("scope")
+                scope_assumptions = response.get("assumptions")
+                scope_constraints = response.get("constraints")
+            else:
+                return {"errors": [f"scope_question failed: {e}"]}
         else:
-            raise ValueError("Invalid response obtained from LLM!")
-    else:
-        raise ValueError("Invalid response obtained from LLM!")
+            return {"errors": [f"scope_question failed: {e}"]}
+    except Exception as e:
+        return {"errors": [f"scope_question failed: {e}"]}
 
-    return{
-        "scope":scope,
+    return {
+        "scope": scope,
         "assumptions": scope_assumptions,
         "constraints": scope_constraints,
         "status": "scoped",
