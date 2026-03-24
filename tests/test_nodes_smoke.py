@@ -1,8 +1,21 @@
 import importlib
-
 from focused_research_agent.state import ResearchState
 
+"""
+Happy-path smoke test for the full research graph.
 
+What is tested:
+- successful end-to-end flow from question to completed answer
+
+How it is tested:
+- fake LLM and search providers return deterministic outputs
+- factories/providers are patched before graph reload
+- the compiled graph is invoked and final state is validated
+
+Why it matters:
+- provides quick confidence that the full workflow wiring works
+- acts as a fast integration-style test without real API calls
+"""
 def make_initial_state(question: str) -> ResearchState:
     return {
         "run_id": "",
