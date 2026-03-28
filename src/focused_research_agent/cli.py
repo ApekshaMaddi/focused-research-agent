@@ -8,6 +8,7 @@ import sys
 
 logger = logging.getLogger("focused_research_agent.cli")
 
+EXIT_COMMANDS = {"exit", "quit", "bye"}
 
 def make_initial_state(question: str) -> ResearchState:
     """
@@ -118,16 +119,34 @@ def format_error_output(message: str) -> str:
     ==============================
     """.strip()
 
-def main() -> None:
-    setup_logging()
+
+
+def get_user_question() -> str | None:
     user_question = " ".join(sys.argv[1:]).strip()
 
-    if not user_question:
-        user_question = input("What is your question? ").strip()
+    if user_question:
+        if user_question.lower() in EXIT_COMMANDS:
+            return None
+        else:
+            return user_question
 
-    if not user_question:
-        print("Please enter a question.")
-        return
+    while True:
+        typed_question = input("What is your question? ").strip()
+
+        if not typed_question:
+            print("Please enter a question.")
+            continue
+
+        if typed_question.lower() in EXIT_COMMANDS:
+            return None
+
+        return typed_question
+
+
+def main() -> None:
+    setup_logging()
+
+    user_question = get_user_question()
 
     initial_state = make_initial_state(user_question)
 
@@ -135,11 +154,12 @@ def main() -> None:
         final_state = focused_research_agent_graph.invoke(initial_state)
         print(format_output(final_state))
     except ValueError as e:
-        print(format_error_output(e))
+        print(format_error_output(str(e)))
         logger.error(str(e))
     except Exception as e:
         print(format_error_output(f"Unexpected internal error occurred: {e}"))
         logger.error(str(e))
 
-if __name__ == "__main__" :
+
+if __name__ == "__main__":
     main()
