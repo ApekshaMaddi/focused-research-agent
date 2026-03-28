@@ -4,6 +4,7 @@ from focused_research_agent.graph import focused_research_agent_graph
 from focused_research_agent.config.logger_config import setup_logging
 
 import logging
+import sys
 
 logger = logging.getLogger("focused_research_agent.cli")
 
@@ -117,21 +118,28 @@ def format_error_output(message: str) -> str:
     ==============================
     """.strip()
 
-
-if __name__ == "__main__":
+def main() -> None:
     setup_logging()
-    user_question = input("What is your question? ").strip()
+    user_question = " ".join(sys.argv[1:]).strip()
+
+    if not user_question:
+        user_question = input("What is your question? ").strip()
+
     if not user_question:
         print("Please enter a question.")
-    else:
-        initial_state = make_initial_state(user_question)
+        return
 
-        try:
-            final_state = focused_research_agent_graph.invoke(initial_state)
-            print(format_output(final_state))
-        except ValueError as e:
-            print(format_error_output(e))
-            logger.error(str(e))
-        except Exception as e:
-            print(format_error_output(f"Unexpected internal error occurred: {e}"))
-            logger.error(str(e))
+    initial_state = make_initial_state(user_question)
+
+    try:
+        final_state = focused_research_agent_graph.invoke(initial_state)
+        print(format_output(final_state))
+    except ValueError as e:
+        print(format_error_output(e))
+        logger.error(str(e))
+    except Exception as e:
+        print(format_error_output(f"Unexpected internal error occurred: {e}"))
+        logger.error(str(e))
+
+if __name__ == "__main__" :
+    main()

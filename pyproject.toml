@@ -23,3 +23,6 @@ dev = [
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
 build-backend = "uv_build"
+
+[project.scripts]
+focused-research-agent = "focused_research_agent.cli:main"
