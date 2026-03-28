@@ -1,6 +1,6 @@
 # CLI entrypoint (python -m focused_research_agent.cli)
 from focused_research_agent.state import ResearchState
-from focused_research_agent.graph import focused_research_agent_graph
+from focused_research_agent.graph import build_graph
 from focused_research_agent.config.logger_config import setup_logging
 
 import logging
@@ -147,11 +147,11 @@ def main() -> None:
     setup_logging()
 
     user_question = get_user_question()
-
+    graph = build_graph()
     initial_state = make_initial_state(user_question)
 
     try:
-        final_state = focused_research_agent_graph.invoke(initial_state)
+        final_state = graph.invoke(initial_state)
         print(format_output(final_state))
     except ValueError as e:
         print(format_error_output(str(e)))

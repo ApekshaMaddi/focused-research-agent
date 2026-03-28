@@ -130,7 +130,8 @@ def test_graph_smoke_run(monkeypatch):
     graph_module = importlib.reload(graph_module)
 
     initial_state = make_initial_state("test question")
-    final_state = graph_module.focused_research_agent_graph.invoke(initial_state)
+    graph = graph_module.build_graph()
+    final_state = graph.invoke(initial_state)
 
     assert final_state["run_id"]
     assert final_state["scope"]

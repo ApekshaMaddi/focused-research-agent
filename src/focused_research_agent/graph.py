@@ -80,6 +80,3 @@ def build_graph():
     builder.add_edge("handle_error", END)
 
     return builder.compile()
-
-
-focused_research_agent_graph = build_graph()
