@@ -54,6 +54,7 @@ def fake_search_config_tavily():
     return {
         "provider": "tavily",
         "api_key": "fake-key",
+        "search_depth": "basic",
         "max_results": 5,
     }
 
@@ -127,6 +128,7 @@ def test_get_search_config_success(monkeypatch):
     assert result == {
         "provider": "tavily",
         "api_key": "fake-key",
+        "search_depth": "basic",
         "max_results": 5,
     }
 
