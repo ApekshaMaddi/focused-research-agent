@@ -64,6 +64,7 @@ def fake_search_config_bad_provider():
         "provider": "not-supported",
         "api_key": "fake-key",
         "max_results": 5,
+        "search_depth": "basic",
     }
 
 
@@ -122,6 +123,7 @@ def test_get_search_config_success(monkeypatch):
     monkeypatch.setenv("SEARCH_PROVIDER", "tavily")
     monkeypatch.setenv("SEARCH_API_KEY", "fake-key")
     monkeypatch.setenv("SEARCH_MAX_RESULTS", "5")
+    monkeypatch.setenv("SEARCH_DEPTH", "basic")
 
     result = search_config_module.get_search_config()
 
