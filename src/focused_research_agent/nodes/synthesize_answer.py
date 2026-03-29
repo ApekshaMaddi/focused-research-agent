@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
 
+INVALID_LLM_RESPONSE_ERROR="Invalid response obtained from LLM"
 
 # This is a lightweight heuristic for ranking, not a full trust system
 _DOMAIN_BONUSES = {
@@ -199,7 +200,7 @@ def _validate_synthesis_response(response: object) -> tuple[str, list]:
 
     if not isinstance(response, dict):
 
-        raise ValueError("Invalid response obtained from LLM")
+        raise ValueError(INVALID_LLM_RESPONSE_ERROR)
 
 
     answer = response.get("answer")
@@ -207,12 +208,12 @@ def _validate_synthesis_response(response: object) -> tuple[str, list]:
 
     if not isinstance(answer, str) or not answer.strip():
 
-        raise ValueError("Invalid response obtained from LLM")
+        raise ValueError(INVALID_LLM_RESPONSE_ERROR)
 
 
     if not isinstance(citations, list) or not citations:
 
-        raise ValueError("Invalid response obtained from LLM")
+        raise ValueError(INVALID_LLM_RESPONSE_ERROR)
     return (answer, citations)
 
 def _clean_citations(citations: list, allowed_urls: set[str]) -> list[str]:
