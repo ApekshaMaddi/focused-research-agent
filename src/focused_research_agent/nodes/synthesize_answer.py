@@ -297,6 +297,7 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     except ValueError as e:
         return {"errors": [str(e)]}
 
+
     return {
         "answer": answer.strip(),
         "citations": cleaned_citations[:3],
