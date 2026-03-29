@@ -22,12 +22,86 @@ class GroqLLMProvider(LLMProvider):
             api_key=self.llm_config["api_key"],
         )
 
+    def _build_json_only_prompt(self, prompt: str) -> str:
+        """Validate the prompt and append a strict JSON-only instruction.
+
+        Args:
+            prompt: The raw prompt to send to the LLM.
+
+        Returns:
+            str: The validated prompt with an added JSON-only instruction.
+
+        Raises:
+            ValueError: If the prompt is not a non-empty string.
+        """
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("GroqLLMProvider: No prompt provided!")
+
+        return (
+            prompt
+            + "\nReturn ONLY valid JSON. No markdown. No backticks. No extra text."
+        )
+
+
+    def _strip_code_fences(self, text: str) -> str:
+        """Remove surrounding triple-backtick code fences from LLM output.
+
+        This handles responses such as ```json ... ``` and returns the
+        inner content unchanged when no code fences are present.
+
+        Args:
+            text: Raw text returned by the LLM.
+
+        Returns:
+            str: Text with outer code fences removed when present.
+        """
+        if text.startswith("```"):
+            lines = text.splitlines()
+
+            if lines:
+                lines = lines[1:]
+
+            if lines and lines[-1].strip().startswith("```"):
+                lines = lines[:-1]
+
+            return "\n".join(lines).strip()
+
+        return text
+
+
+    def _extract_json_candidate(self, text: str) -> str | None:
+        """Extract a likely JSON object or array substring from mixed text.
+
+        The method looks for the outermost JSON object first and, if not
+        found, falls back to a JSON array.
+
+        Args:
+            text: LLM output that may contain JSON surrounded by extra text.
+
+        Returns:
+            str | None: The extracted JSON substring if found, otherwise None.
+        """
+        obj_start = text.find("{")
+        obj_end = text.rfind("}")
+        arr_start = text.find("[")
+        arr_end = text.rfind("]")
+
+        if obj_start != -1 and obj_end != -1 and obj_start < obj_end:
+            return text[obj_start: obj_end + 1]
+
+        if arr_start != -1 and arr_end != -1 and arr_start < arr_end:
+            return text[arr_start: arr_end + 1]
+
+        return None
+
+
     def generate_json(self, prompt: str) -> dict:
         """Generate structured JSON from a prompt using Groq.
 
-        The method sends the prompt to the LLM, removes markdown-style
-        code fences if present, and attempts strict JSON parsing with a
-        fallback extraction pass.
+        The method validates the prompt, appends a JSON-only instruction,
+        invokes the LLM, removes code fences if present, and first tries
+        direct JSON parsing. If that fails, it attempts to extract a JSON
+        object or array from surrounding text and parse that instead.
 
         Args:
             prompt: The prompt to send to the LLM.
@@ -37,48 +111,18 @@ class GroqLLMProvider(LLMProvider):
 
         Raises:
             ValueError: If the prompt is invalid or the provider does not
-            return valid JSON.
+                return recoverable valid JSON.
         """
-
-        if not isinstance(prompt, str) or not prompt.strip():
-            raise ValueError("GroqLLMProvider: No prompt provided!")
-
-        updated_prompt = (
-            prompt
-            + "\nReturn ONLY valid JSON. No markdown. No backticks. No extra text."
-        )
-
+        updated_prompt = self._build_json_only_prompt(prompt)
         response = self.llm.invoke(updated_prompt)
-        text = (response.content or "").strip()
+        text = self._strip_code_fences((response.content or "").strip())
 
-        # 1) Remove triple-backtick fences if present
-        if text.startswith("```"):
-            lines = text.splitlines()
-            # drop first line (``` or ```json)
-            if lines:
-                lines = lines[1:]
-            # drop last line if it's ```
-            if lines and lines[-1].strip().startswith("```"):
-                lines = lines[:-1]
-            text = "\n".join(lines).strip()
-
-        # 2) Try parsing directly first
         try:
             return json.loads(text)
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON from LLM: {e}")
 
-        # 3) Fallback: extract JSON object/array from surrounding text
-        obj_start = text.find("{")
-        obj_end = text.rfind("}")
-        arr_start = text.find("[")
-        arr_end = text.rfind("]")
-
-        candidate = None
-        if obj_start != -1 and obj_end != -1 and obj_start < obj_end:
-            candidate = text[obj_start : obj_end + 1]
-        elif arr_start != -1 and arr_end != -1 and arr_start < arr_end:
-            candidate = text[arr_start : arr_end + 1]
+        candidate = self._extract_json_candidate(text)
 
         if candidate is None:
             raise ValueError(f"LLM did not return JSON. Raw output:\n{text[:400]}")
