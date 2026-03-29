@@ -63,6 +63,7 @@ def fake_search_config():
         "provider": "tavily",
         "api_key": "fake-key",
         "max_results": 5,
+        "search_depth": "basic",
     }
 
 

@@ -54,6 +54,7 @@ def fake_search_config_tavily():
     return {
         "provider": "tavily",
         "api_key": "fake-key",
+        "search_depth": "basic",
         "max_results": 5,
     }
 
@@ -63,6 +64,7 @@ def fake_search_config_bad_provider():
         "provider": "not-supported",
         "api_key": "fake-key",
         "max_results": 5,
+        "search_depth": "basic",
     }
 
 
@@ -121,12 +123,14 @@ def test_get_search_config_success(monkeypatch):
     monkeypatch.setenv("SEARCH_PROVIDER", "tavily")
     monkeypatch.setenv("SEARCH_API_KEY", "fake-key")
     monkeypatch.setenv("SEARCH_MAX_RESULTS", "5")
+    monkeypatch.setenv("SEARCH_DEPTH", "basic")
 
     result = search_config_module.get_search_config()
 
     assert result == {
         "provider": "tavily",
         "api_key": "fake-key",
+        "search_depth": "basic",
         "max_results": 5,
     }
 
@@ -135,6 +139,7 @@ def test_get_search_config_raises_when_required_value_missing(monkeypatch):
     monkeypatch.delenv("SEARCH_PROVIDER", raising=False)
     monkeypatch.setenv("SEARCH_API_KEY", "fake-key")
     monkeypatch.setenv("SEARCH_MAX_RESULTS", "5")
+    monkeypatch.setenv("SEARCH_DEPTH", "basic")
 
     with pytest.raises(ValueError, match="should be given in .env file"):
         search_config_module.get_search_config()
@@ -144,6 +149,7 @@ def test_get_search_config_raises_when_max_results_invalid(monkeypatch):
     monkeypatch.setenv("SEARCH_PROVIDER", "tavily")
     monkeypatch.setenv("SEARCH_API_KEY", "fake-key")
     monkeypatch.setenv("SEARCH_MAX_RESULTS", "not-an-int")
+    monkeypatch.setenv("SEARCH_DEPTH", "basic")
 
     with pytest.raises(ValueError, match="SEARCH_MAX_RESULTS must be an int"):
         search_config_module.get_search_config()
@@ -153,6 +159,7 @@ def test_get_search_config_raises_when_max_results_not_positive(monkeypatch):
     monkeypatch.setenv("SEARCH_PROVIDER", "tavily")
     monkeypatch.setenv("SEARCH_API_KEY", "fake-key")
     monkeypatch.setenv("SEARCH_MAX_RESULTS", "0")
+    monkeypatch.setenv("SEARCH_DEPTH", "basic")
 
     with pytest.raises(
         ValueError, match="SEARCH_MAX_RESULTS must be a positive integer"
