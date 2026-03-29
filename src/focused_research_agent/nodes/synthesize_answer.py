@@ -291,47 +291,11 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     except Exception as e:
         return {"errors": [f"synthesize_answer failed: {e}"]}
 
-    # if not isinstance(response, dict):
-    #     return {"errors": ["synthesize_answer: Invalid response obtained from LLM"]}
-    #
-    # answer = response.get("answer")
-    # citations = response.get("citations")
-    #
-    # if not isinstance(answer, str) or not answer.strip():
-    #     return {"errors": ["synthesize_answer: Invalid answer obtained from LLM"]}
-    #
-    # if not isinstance(citations, list) or not citations:
-    #     return {"errors": ["synthesize_answer: Invalid citations obtained from LLM"]}
-
     try:
         answer, citations = _validate_synthesis_response(response)
         cleaned_citations = _clean_citations(citations, allowed_urls)
     except ValueError as e:
         return {"errors": [str(e)]}
-
-    #
-    # for citation in citations:
-    #     if not isinstance(citation, str):
-    #         return {"errors": ["synthesize_answer: Citation must be a string"]}
-    #
-    #     citation = citation.strip()
-    #
-    #     if not citation:
-    #         return {"errors": ["synthesize_answer: Empty citation returned by LLM"]}
-    #
-    #     if citation not in allowed_urls:
-    #         return {
-    #             "errors": [
-    #                 f"synthesize_answer: LLM returned unknown citation URL: {citation}"
-    #             ]
-    #         }
-    #
-    #     if citation not in seen_citations:
-    #         seen_citations.add(citation)
-    #         cleaned_citations.append(citation)
-    #
-    # if not cleaned_citations:
-    #     return {"errors": ["synthesize_answer: No valid citations found"]}
 
     return {
         "answer": answer.strip(),
