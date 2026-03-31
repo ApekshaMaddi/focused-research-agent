@@ -2,3 +2,18 @@ Built a CLI-first research agent in Python using LangGraph, with function-based 
 Applied SOLID selectively through interface-driven provider abstractions, factory-based dependency selection, strict runtime validation, normalized search results,
 and LLM-based answer synthesis with citation control.
 
+
+5) Important architectural wording to keep in docs later
+
+This part is worth preserving exactly in spirit:
+
+routers are transport adapters
+application layer contains use-case/business logic
+graph contains workflow orchestration
+providers/services handle external integrations
+
+That wording will be very useful later for:
+
+project-level documentation
+module-level documentation
+interview explanations
