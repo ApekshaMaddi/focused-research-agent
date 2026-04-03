@@ -3,20 +3,7 @@ from focused_research_agent.state import ResearchState
 
 
 def scope_question(state: ResearchState, llm_provider: LLMProvider) -> dict:
-    """Generate focused web-search queries from the scoped question.
 
-    This node uses the LLM provider to produce 3 to 6 short,
-    search-engine-style queries that directly support answering the
-    user's question.
-
-    Args:
-        state: The current research state.
-        llm_provider: The active LLM provider instance.
-
-    Returns:
-        dict: A partial state update containing generated queries and
-        status, or an errors field if generation fails.
-    """
     user_query = (state.get("question") or "").strip()
 
     if not user_query:
