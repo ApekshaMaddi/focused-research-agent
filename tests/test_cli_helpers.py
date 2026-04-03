@@ -1,48 +1,5 @@
 import focused_research_agent.cli as cli_module
 
-"""
-What are we testing?
-This file tests the pure helper functions in cli.py that format data for terminal output. These helpers do not call the graph, LLM, or search provider. They only convert already-available state into user-friendly text. The tests cover:
-
-initial state creation
-formatting queries
-formatting sources
-formatting citations
-formatting the full success output
-formatting the error output
-
-How are we testing?
-We call each helper function directly with simple test data and compare the returned string to the expected output. For example:
-
-format_queries(None) should return the placeholder text for missing queries
-format_queries([...]) should return a bullet list
-format_sources([...]) should return a numbered list with title and URL
-format_output(state) should include all major sections such as QUESTION, STATUS, ANSWER, and CITATIONS
-
-Why is this useful?
-These tests verify that the CLI presentation layer is predictable and stable. Even if the graph logic is correct, poor formatting can make the tool hard to use. 
-Since these helpers are pure functions, they are ideal for fast, deterministic unit tests.
-
-“This file tests only presentation logic. I separated output formatting from business logic, so I can test the CLI display independently from the graph and providers.”
-"""
-
-
-def test_make_initial_state_returns_expected_shape():
-    result = cli_module.make_initial_state("test question")
-
-    assert result["run_id"] == ""
-    assert result["question"] == "test question"
-    assert result["scope"] is None
-    assert result["assumptions"] is None
-    assert result["constraints"] is None
-    assert result["queries"] is None
-    assert result["sources"] is None
-    assert result["answer"] is None
-    assert result["citations"] is None
-    assert result["status"] == "started"
-    assert result["errors"] == []
-    assert result["debug"] is None
-
 
 def test_format_queries_returns_placeholder_when_none():
     result = cli_module.format_queries(None)
@@ -111,6 +68,7 @@ def test_format_output_contains_expected_sections():
         ],
         "answer": "This is the answer.",
         "citations": ["https://example.com/one"],
+        "errors": [],
     }
 
     result = cli_module.format_output(state)

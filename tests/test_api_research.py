@@ -1,0 +1,144 @@
+from fastapi.testclient import TestClient
+
+from focused_research_agent.api.app import app
+import focused_research_agent.api.routers.research as research_router_module
+
+
+client = TestClient(app)
+
+
+def fake_success_research_question(question: str) -> dict:
+    return {
+        "run_id": "run-123",
+        "question": question.strip(),
+        "status": "completed",
+        "scope": "Explain the topic clearly",
+        "queries": [
+            "ai agents overview",
+            "latest ai agent frameworks",
+            "ai agent use cases",
+        ],
+        "sources": [
+            {
+                "title": "AI Agents Overview",
+                "url": "https://example.com/overview",
+                "snippet": "A high-level overview of AI agents.",
+                "source": "mock",
+                "score": 0.95,
+            },
+            {
+                "title": "AI Agent Frameworks",
+                "url": "https://example.com/frameworks",
+                "snippet": "A summary of current AI agent frameworks.",
+                "source": "mock",
+                "score": 0.91,
+            },
+        ],
+        "answer": "AI agents are systems that can plan and act toward goals.",
+        "citations": [
+            "https://example.com/overview",
+            "https://example.com/frameworks",
+        ],
+        "errors": [],
+    }
+
+
+def fake_error_research_question(question: str) -> dict:
+    return {
+        "run_id": "run-999",
+        "question": question.strip(),
+        "status": "error",
+        "scope": None,
+        "queries": None,
+        "sources": None,
+        "answer": None,
+        "citations": None,
+        "errors": ["search_web: Tavily request failed"],
+    }
+
+
+def test_research_returns_structured_success_response(monkeypatch):
+    monkeypatch.setattr(
+        research_router_module.research_use_case,
+        "research_question",
+        fake_success_research_question,
+    )
+
+    response = client.post(
+        "/research",
+        json={"question": "Tell me about AI agents"},
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["run_id"] == "run-123"
+    assert data["question"] == "Tell me about AI agents"
+    assert data["status"] == "completed"
+    assert data["scope"] == "Explain the topic clearly"
+    assert data["queries"] == [
+        "ai agents overview",
+        "latest ai agent frameworks",
+        "ai agent use cases",
+    ]
+    assert len(data["sources"]) == 2
+    assert data["sources"][0]["title"] == "AI Agents Overview"
+    assert data["sources"][0]["url"] == "https://example.com/overview"
+    assert data["answer"] == "AI agents are systems that can plan and act toward goals."
+    assert data["citations"] == [
+        "https://example.com/overview",
+        "https://example.com/frameworks",
+    ]
+    assert data["errors"] == []
+
+
+def test_research_returns_error_response_shape(monkeypatch):
+    monkeypatch.setattr(
+        research_router_module.research_use_case,
+        "research_question",
+        fake_error_research_question,
+    )
+
+    response = client.post(
+        "/research",
+        json={"question": "Trigger graph error"},
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["run_id"] == "run-999"
+    assert data["question"] == "Trigger graph error"
+    assert data["status"] == "error"
+    assert data["scope"] is None
+    assert data["queries"] is None
+    assert data["sources"] is None
+    assert data["answer"] is None
+    assert data["citations"] is None
+    assert data["errors"] == ["search_web: Tavily request failed"]
+
+
+def test_research_rejects_empty_question():
+    response = client.post("/research", json={"question": ""})
+
+    assert response.status_code == 422
+
+
+def test_research_rejects_whitespace_only_question():
+    response = client.post("/research", json={"question": "   "})
+
+    assert response.status_code == 422
+
+
+def test_research_rejects_missing_question():
+    response = client.post("/research", json={})
+
+    assert response.status_code == 422
+
+
+def test_research_rejects_wrong_question_type():
+    response = client.post("/research", json={"question": 123})
+
+    assert response.status_code == 422
