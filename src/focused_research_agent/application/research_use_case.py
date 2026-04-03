@@ -42,6 +42,45 @@ def make_initial_state(question: str) -> ResearchState:
 
     return initial_state
 
+def _is_list_of_strings(value: object) -> bool:
+    return isinstance(value, list) and all(isinstance(item, str) for item in value)
+
+
+def _is_list_of_dicts(value: object) -> bool:
+    return isinstance(value, list) and all(isinstance(item, dict) for item in value)
+
+
+def normalize_state(final_state: ResearchState, user_query: str) -> dict:
+    normalized_state = {
+        "run_id": final_state.get("run_id") or "",
+        "question": final_state.get("question") or user_query,
+        "status": final_state.get("status") or "error",
+        "scope": final_state.get("scope"),
+        "queries": None,
+        "sources": None,
+        "answer": final_state.get("answer"),
+        "citations": None,
+        "errors": [],
+    }
+
+    queries = final_state.get("queries")
+    if _is_list_of_strings(queries):
+        normalized_state["queries"] = queries
+
+    sources = final_state.get("sources")
+    if _is_list_of_dicts(sources):
+        normalized_state["sources"] = sources
+
+    citations = final_state.get("citations")
+    if _is_list_of_strings(citations):
+        normalized_state["citations"] = citations
+
+    errors = final_state.get("errors")
+    if _is_list_of_strings(errors):
+        normalized_state["errors"] = errors
+
+    return normalized_state
+    
 
 def research_question(question: str) -> dict:
     """
@@ -72,5 +111,5 @@ def research_question(question: str) -> dict:
     graph = build_graph()
     initial_state = make_initial_state(user_query)
     final_state = graph.invoke(initial_state)
-
-    return final_state
+    normalized_state = normalize_state(final_state,user_query)
+    return normalized_state
