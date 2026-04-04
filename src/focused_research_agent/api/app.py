@@ -14,7 +14,15 @@ on app construction, router registration, and API-level configuration, while
 delegating request handling to routers and business/use-case execution to the
 application layer.
 '''
-app = FastAPI(title="Focused Research Agent API")
 
-app.include_router(health_router)
-app.include_router(research_router)
+
+
+
+def create_app():
+    application = FastAPI(title="Focused Research Agent API")
+    application.include_router(health_router)
+    application.include_router(research_router)
+    return application
+
+
+app=create_app()
