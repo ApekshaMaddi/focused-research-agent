@@ -16,12 +16,14 @@ application layer.
 '''
 
 
-
+def _include_routers(application: FastAPI):
+    application.include_router(health_router)
+    application.include_router(research_router)
+    
 
 def create_app():
     application = FastAPI(title="Focused Research Agent API")
-    application.include_router(health_router)
-    application.include_router(research_router)
+    _include_routers(application)
     return application
 
 
