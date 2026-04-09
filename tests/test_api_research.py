@@ -1,13 +1,31 @@
+"""
+Tests for the FastAPI /research endpoint.
+
+These tests verify request validation, success responses, and error-shaped
+responses for the research API route. They override the FastAPI dependency
+used by the route so the tests can focus on API behavior without invoking
+the real research workflow.
+"""
+
 from fastapi.testclient import TestClient
 
 from focused_research_agent.api.app import app
-import focused_research_agent.api.routers.research as research_router_module
+from focused_research_agent.api.dependencies import get_research_use_case
 
 
 client = TestClient(app)
 
 
 def fake_success_research_question(question: str) -> dict:
+    """
+    Return a successful mock research response.
+
+    Args:
+        question: User research question provided to the endpoint.
+
+    Returns:
+        dict: Mocked successful research result.
+    """
     return {
         "run_id": "run-123",
         "question": question.strip(),
@@ -44,6 +62,15 @@ def fake_success_research_question(question: str) -> dict:
 
 
 def fake_error_research_question(question: str) -> dict:
+    """
+    Return an error-shaped mock research response.
+
+    Args:
+        question: User research question provided to the endpoint.
+
+    Returns:
+        dict: Mocked error research result.
+    """
     return {
         "run_id": "run-999",
         "question": question.strip(),
@@ -57,88 +84,112 @@ def fake_error_research_question(question: str) -> dict:
     }
 
 
-def test_research_returns_structured_success_response(monkeypatch):
-    monkeypatch.setattr(
-        research_router_module.research_use_case,
-        "research_question",
-        fake_success_research_question,
+def test_research_returns_structured_success_response():
+    """
+    Verify that the research route returns the expected structured success
+    response when the dependency provides a successful research result.
+    """
+    app.dependency_overrides[get_research_use_case] = (
+        lambda: fake_success_research_question
     )
 
-    response = client.post(
-        "/research",
-        json={"question": "Tell me about AI agents"},
-    )
+    try:
+        response = client.post(
+            "/research",
+            json={"question": "Tell me about AI agents"},
+        )
 
-    assert response.status_code == 200
+        assert response.status_code == 200
 
-    data = response.json()
+        data = response.json()
 
-    assert data["run_id"] == "run-123"
-    assert data["question"] == "Tell me about AI agents"
-    assert data["status"] == "completed"
-    assert data["scope"] == "Explain the topic clearly"
-    assert data["queries"] == [
-        "ai agents overview",
-        "latest ai agent frameworks",
-        "ai agent use cases",
-    ]
-    assert len(data["sources"]) == 2
-    assert data["sources"][0]["title"] == "AI Agents Overview"
-    assert data["sources"][0]["url"] == "https://example.com/overview"
-    assert data["answer"] == "AI agents are systems that can plan and act toward goals."
-    assert data["citations"] == [
-        "https://example.com/overview",
-        "https://example.com/frameworks",
-    ]
-    assert data["errors"] == []
+        assert data["run_id"] == "run-123"
+        assert data["question"] == "Tell me about AI agents"
+        assert data["status"] == "completed"
+        assert data["scope"] == "Explain the topic clearly"
+        assert data["queries"] == [
+            "ai agents overview",
+            "latest ai agent frameworks",
+            "ai agent use cases",
+        ]
+        assert len(data["sources"]) == 2
+        assert data["sources"][0]["title"] == "AI Agents Overview"
+        assert data["sources"][0]["url"] == "https://example.com/overview"
+        assert (
+            data["answer"]
+            == "AI agents are systems that can plan and act toward goals."
+        )
+        assert data["citations"] == [
+            "https://example.com/overview",
+            "https://example.com/frameworks",
+        ]
+        assert data["errors"] == []
+    finally:
+        app.dependency_overrides.clear()
 
 
-def test_research_returns_error_response_shape(monkeypatch):
-    monkeypatch.setattr(
-        research_router_module.research_use_case,
-        "research_question",
-        fake_error_research_question,
-    )
+def test_research_returns_error_response_shape():
+    """
+    Verify that the research route returns the expected error-shaped response
+    when the dependency provides a graph-style error result.
+    """
+    app.dependency_overrides[get_research_use_case] = lambda: fake_error_research_question
 
-    response = client.post(
-        "/research",
-        json={"question": "Trigger graph error"},
-    )
+    try:
+        response = client.post(
+            "/research",
+            json={"question": "Trigger graph error"},
+        )
 
-    assert response.status_code == 200
+        assert response.status_code == 200
 
-    data = response.json()
+        data = response.json()
 
-    assert data["run_id"] == "run-999"
-    assert data["question"] == "Trigger graph error"
-    assert data["status"] == "error"
-    assert data["scope"] is None
-    assert data["queries"] is None
-    assert data["sources"] is None
-    assert data["answer"] is None
-    assert data["citations"] is None
-    assert data["errors"] == ["search_web: Tavily request failed"]
+        assert data["run_id"] == "run-999"
+        assert data["question"] == "Trigger graph error"
+        assert data["status"] == "error"
+        assert data["scope"] is None
+        assert data["queries"] is None
+        assert data["sources"] is None
+        assert data["answer"] is None
+        assert data["citations"] is None
+        assert data["errors"] == ["search_web: Tavily request failed"]
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_research_rejects_empty_question():
+    """
+    Verify that the route rejects an empty question at the API validation layer.
+    """
     response = client.post("/research", json={"question": ""})
 
     assert response.status_code == 422
 
 
 def test_research_rejects_whitespace_only_question():
+    """
+    Verify that the route rejects a whitespace-only question at the API
+    validation layer.
+    """
     response = client.post("/research", json={"question": "   "})
 
     assert response.status_code == 422
 
 
 def test_research_rejects_missing_question():
+    """
+    Verify that the route rejects a request body with no question field.
+    """
     response = client.post("/research", json={})
 
     assert response.status_code == 422
 
 
 def test_research_rejects_wrong_question_type():
+    """
+    Verify that the route rejects a request where question has the wrong type.
+    """
     response = client.post("/research", json={"question": 123})
 
     assert response.status_code == 422
