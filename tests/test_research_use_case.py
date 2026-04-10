@@ -1,10 +1,32 @@
+"""
+Tests for the shared application-layer research use case.
+
+These tests verify initial-state creation, application-level input
+validation, and normalized graph result handling.
+"""
+
 import pytest
 
 import focused_research_agent.application.research_use_case as use_case_module
+from focused_research_agent.application.exceptions import ApplicationError
 
 
 class FakeGraph:
+    """
+    Simple fake graph used to test the application-layer use case without
+    invoking the real LangGraph workflow.
+    """
+
     def invoke(self, initial_state: dict) -> dict:
+        """
+        Return a fixed successful graph result.
+
+        Args:
+            initial_state: Initial graph state passed into the workflow.
+
+        Returns:
+            dict: Mocked graph result.
+        """
         return {
             "run_id": "run-456",
             "question": initial_state["question"],
@@ -27,10 +49,20 @@ class FakeGraph:
 
 
 def fake_build_graph():
+    """
+    Return a fake graph instance for testing.
+
+    Returns:
+        FakeGraph: Fake workflow object.
+    """
     return FakeGraph()
 
 
 def test_make_initial_state_returns_expected_shape():
+    """
+    Verify that the initial research state contains the expected default
+    values.
+    """
     result = use_case_module.make_initial_state("test question")
 
     assert result["run_id"] == ""
@@ -48,16 +80,28 @@ def test_make_initial_state_returns_expected_shape():
 
 
 def test_research_question_raises_when_question_is_not_string():
-    with pytest.raises(ValueError, match="User query must be a string"):
+    """
+    Verify that the use case raises ApplicationError when the question is
+    not a string.
+    """
+    with pytest.raises(ApplicationError, match="User query must be a string"):
         use_case_module.research_question(123)  # type: ignore[arg-type]
 
 
 def test_research_question_raises_when_question_is_blank():
-    with pytest.raises(ValueError, match="No user query provided"):
+    """
+    Verify that the use case raises ApplicationError when the question is
+    empty after trimming whitespace.
+    """
+    with pytest.raises(ApplicationError, match="No user query provided"):
         use_case_module.research_question("   ")
 
 
 def test_research_question_returns_normalized_graph_result(monkeypatch):
+    """
+    Verify that the use case returns a normalized result after executing the
+    graph successfully.
+    """
     monkeypatch.setattr(use_case_module, "build_graph", fake_build_graph)
 
     result = use_case_module.research_question("   test question   ")

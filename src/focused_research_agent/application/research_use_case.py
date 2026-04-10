@@ -11,6 +11,9 @@ transport concerns out of the core execution path.
 """
 
 from focused_research_agent.application.exceptions import ApplicationError
+from focused_research_agent.application.question_validation import (
+    validate_and_clean_question,
+)
 from focused_research_agent.graph import build_graph
 from focused_research_agent.state import ResearchState
 
@@ -55,7 +58,7 @@ def normalize_state(final_state: ResearchState, user_query: str) -> dict:
 
     Returns:
         dict: Normalized research result containing the fields expected by
-        transport layers.
+            transport layers.
     """
     normalized_state = {
         "run_id": final_state.get("run_id") or "",
@@ -97,7 +100,7 @@ def make_initial_state(question: str) -> ResearchState:
 
     Returns:
         ResearchState: Initial shared state expected by the LangGraph
-        workflow.
+            workflow.
     """
     initial_state: ResearchState = {
         "run_id": "",
@@ -125,6 +128,11 @@ def research_question(question: str) -> dict:
     graph state, builds the LangGraph workflow, invokes it, and returns a
     normalized result to the calling transport layer.
 
+    The shared question validator raises ValueError so it can be reused by
+    Pydantic/FastAPI request validation. At the application-layer boundary,
+    that ValueError is translated into ApplicationError so transport layers
+    can handle expected use-case failures consistently.
+
     Args:
         question: User research question.
 
@@ -132,16 +140,13 @@ def research_question(question: str) -> dict:
         dict: Normalized research result produced by the workflow.
 
     Raises:
-        ApplicationError: If the question is not a string or is empty after
-        trimming whitespace.
+        ApplicationError: If the question is invalid for the research use
+            case.
     """
-    if not isinstance(question, str):
-        raise ApplicationError("User query must be a string")
-
-    user_query = question.strip()
-
-    if not user_query:
-        raise ApplicationError("No user query provided")
+    try:
+        user_query = validate_and_clean_question(question)
+    except ValueError as exc:
+        raise ApplicationError(str(exc)) from exc
 
     graph = build_graph()
     initial_state = make_initial_state(user_query)

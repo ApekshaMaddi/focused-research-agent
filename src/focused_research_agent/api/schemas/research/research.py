@@ -1,7 +1,3 @@
-from pydantic import BaseModel, StringConstraints
-from typing import Annotated
-
-
 """
 Pydantic request and response schemas for the research API.
 
@@ -13,21 +9,34 @@ These models belong to the API boundary and should represent transport-level
 data shapes, not internal graph state or provider-specific models.
 """
 
+from typing import Annotated
+
+from pydantic import AfterValidator, BaseModel, StringConstraints
+
+from focused_research_agent.application.question_validation import (
+    validate_and_clean_question,
+)
+
+
 class ResearchRequest(BaseModel):
     """
     Request schema for submitting a research question through the API.
 
     This model represents the client payload required to trigger the research
-    use case. At the current stage, it contains only the user’s question to keep
-    the API contract minimal and focused.
+    use case. It contains a validated, non-empty user question and rejects
+    blank, whitespace-only, punctuation-only, or meaningless ultra-short
+    input.
 
     Attributes:
-    question: The user’s research question.
+        question: The user's research question.
     """
+
     question: Annotated[
         str,
         StringConstraints(strip_whitespace=True, min_length=1, strict=True),
+        AfterValidator(validate_and_clean_question),
     ]
+
 
 class SourceResponse(BaseModel):
     """
@@ -43,19 +52,22 @@ class SourceResponse(BaseModel):
         source: Name of the originating source provider.
         score: Relevance score assigned during search.
     """
+
     title: str
     url: str
     snippet: str
     source: str
     score: float
 
+
 class ResearchResponse(BaseModel):
     """
     Response schema returned by the research API endpoint.
 
-    This model represents the structured API response for the research use case.
-    It mirrors the main graph output fields exposed through the application layer
-    and provides a stable transport-level response shape for clients.
+    This model represents the structured API response for the research use
+    case. It mirrors the main graph output fields exposed through the
+    application layer and provides a stable transport-level response shape
+    for clients.
 
     Attributes:
         run_id: Unique identifier for the research run.
