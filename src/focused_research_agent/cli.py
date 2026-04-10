@@ -4,18 +4,19 @@ Command-line interface entrypoint for the Focused Research Agent.
 This module contains terminal-specific interaction logic for the project.
 It is responsible for reading user input from command-line arguments or
 interactive prompts, handling exit commands, and formatting the final
-graph result for CLI display.
+research result for CLI display.
 
-Architecturally, the CLI is a transport adapter. It should stay focused
-on terminal input/output concerns and delegate research execution to the
+Architecturally, the CLI is a transport adapter. It should stay focused on
+terminal input/output concerns and delegate research execution to the
 application layer.
 """
 
-from focused_research_agent.application import research_use_case
-from focused_research_agent.config.logger_config import setup_logging
-
 import logging
 import sys
+
+from focused_research_agent.application import research_use_case
+from focused_research_agent.application.exceptions import ApplicationError
+from focused_research_agent.config.logger_config import setup_logging
 
 logger = logging.getLogger("focused_research_agent.cli")
 
@@ -27,7 +28,7 @@ def format_queries(queries: list[str] | None) -> str:
     Format generated search queries for CLI display.
 
     Args:
-        queries: Generated search queries from the graph state.
+        queries: Generated search queries from the research result.
 
     Returns:
         str: Human-readable CLI text for the queries section.
@@ -47,7 +48,7 @@ def format_sources(sources: list[dict] | None) -> str:
     Format collected source entries for CLI display.
 
     Args:
-        sources: Source dictionaries returned in the graph state.
+        sources: Source dictionaries returned in the research result.
 
     Returns:
         str: Human-readable CLI text for the sources section.
@@ -66,10 +67,10 @@ def format_sources(sources: list[dict] | None) -> str:
 
 def format_citations(citations: list[str] | None) -> str:
     """
-    Format citations for CLI display.
+    Format citation URLs for CLI display.
 
     Args:
-        citations: Citation URLs returned in the graph state.
+        citations: Citation URLs returned in the research result.
 
     Returns:
         str: Human-readable CLI text for the citations section.
@@ -86,13 +87,13 @@ def format_citations(citations: list[str] | None) -> str:
 
 def format_output(state: dict) -> str:
     """
-    Build the final CLI output block from graph state.
+    Build the final CLI output block from the normalized research result.
 
     Args:
-        state: Final graph state returned by the research use case.
+        state: Normalized research result returned by the application layer.
 
     Returns:
-        str: A formatted multi-section CLI output block.
+        str: Formatted CLI output block.
     """
     return f"""
 ==============================
@@ -130,7 +131,7 @@ def format_error_output(message: str) -> str:
         message: Error message to display in the terminal.
 
     Returns:
-        str: A formatted CLI error block.
+        str: Formatted CLI error block.
     """
     return f"""
 ==============================
@@ -153,8 +154,8 @@ def get_user_question_from_command_line() -> str | None:
     cleanly.
 
     Returns:
-        str | None: The validated user question, or None if the user chose
-        to exit the application.
+        str | None: Validated user question, or None if the user chose to
+        exit the application.
     """
     user_question = " ".join(sys.argv[1:]).strip()
 
@@ -181,8 +182,8 @@ def main() -> None:
     Run the CLI entrypoint for the research agent.
 
     This function initializes logging, collects a user question from the
-    terminal, executes the research use case through the application layer,
-    and prints either formatted output or formatted error information.
+    terminal, executes the shared research use case, and prints either
+    formatted output or a formatted CLI error block.
 
     Returns:
         None
@@ -204,14 +205,10 @@ def main() -> None:
 
         print(format_output(final_state))
 
-    except ValueError as e:
+    except ApplicationError as e:
         print(format_error_output(str(e)))
         logger.error(str(e))
 
     except Exception as e:
         print(format_error_output(f"Unexpected internal error occurred: {e}"))
         logger.exception("Unexpected error in CLI")
-
-
-if __name__ == "__main__":
-    main()
