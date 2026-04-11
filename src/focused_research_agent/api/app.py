@@ -16,12 +16,15 @@ from focused_research_agent.api.api_exception_handlers import (
     register_exception_handlers,
 )
 from focused_research_agent.api.routers.health import health_router
-from focused_research_agent.api.routers.research import research_router
+from focused_research_agent.api.routers.v1 import api_v1_router
 
 
 def register_routers(app: FastAPI) -> None:
     """
     Register all API routers on the FastAPI app.
+
+    This function mounts operational routes such as `/health` directly and
+    mounts business/API contract routes through the versioned API namespace.
 
     Args:
         app: FastAPI application instance.
@@ -30,7 +33,7 @@ def register_routers(app: FastAPI) -> None:
         None
     """
     app.include_router(health_router)
-    app.include_router(research_router)
+    app.include_router(api_v1_router)
 
 
 def create_app() -> FastAPI:
@@ -40,10 +43,10 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI: Configured FastAPI application.
     """
-    app = FastAPI(title="Focused Research Agent API")
-    register_routers(app)
-    register_exception_handlers(app)
-    return app
+    api = FastAPI(title="Focused Research Agent API")
+    register_routers(api)
+    register_exception_handlers(api)
+    return api
 
 
 app = create_app()

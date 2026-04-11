@@ -1,5 +1,5 @@
 """
-Tests for the FastAPI /research endpoint.
+Tests for the FastAPI versioned /research endpoint.
 
 These tests verify request validation, success responses, and error-shaped
 responses for the research API route. They override the FastAPI dependency
@@ -86,8 +86,9 @@ def fake_error_research_question(question: str) -> dict:
 
 def test_research_returns_structured_success_response():
     """
-    Verify that the research route returns the expected structured success
-    response when the dependency provides a successful research result.
+    Verify that the versioned research route returns the expected structured
+    success response when the dependency provides a successful research
+    result.
     """
     app.dependency_overrides[get_research_use_case] = (
         lambda: fake_success_research_question
@@ -95,7 +96,7 @@ def test_research_returns_structured_success_response():
 
     try:
         response = client.post(
-            "/research",
+            "/api/v1/research",
             json={"question": "Tell me about AI agents"},
         )
 
@@ -130,14 +131,16 @@ def test_research_returns_structured_success_response():
 
 def test_research_returns_error_response_shape():
     """
-    Verify that the research route returns the expected error-shaped response
-    when the dependency provides a graph-style error result.
+    Verify that the versioned research route returns the expected error-shaped
+    response when the dependency provides a graph-style error result.
     """
-    app.dependency_overrides[get_research_use_case] = lambda: fake_error_research_question
+    app.dependency_overrides[get_research_use_case] = (
+        lambda: fake_error_research_question
+    )
 
     try:
         response = client.post(
-            "/research",
+            "/api/v1/research",
             json={"question": "Trigger graph error"},
         )
 
@@ -160,36 +163,59 @@ def test_research_returns_error_response_shape():
 
 def test_research_rejects_empty_question():
     """
-    Verify that the route rejects an empty question at the API validation layer.
+    Verify that the versioned route rejects an empty question at the API
+    validation layer.
     """
-    response = client.post("/research", json={"question": ""})
+    response = client.post("/api/v1/research", json={"question": ""})
 
     assert response.status_code == 422
 
 
 def test_research_rejects_whitespace_only_question():
     """
-    Verify that the route rejects a whitespace-only question at the API
-    validation layer.
+    Verify that the versioned route rejects a whitespace-only question at the
+    API validation layer.
     """
-    response = client.post("/research", json={"question": "   "})
+    response = client.post("/api/v1/research", json={"question": "   "})
 
     assert response.status_code == 422
 
 
 def test_research_rejects_missing_question():
     """
-    Verify that the route rejects a request body with no question field.
+    Verify that the versioned route rejects a request body with no question
+    field.
     """
-    response = client.post("/research", json={})
+    response = client.post("/api/v1/research", json={})
 
     assert response.status_code == 422
 
 
 def test_research_rejects_wrong_question_type():
     """
-    Verify that the route rejects a request where question has the wrong type.
+    Verify that the versioned route rejects a request where question has the
+    wrong type.
     """
-    response = client.post("/research", json={"question": 123})
+    response = client.post("/api/v1/research", json={"question": 123})
+
+    assert response.status_code == 422
+
+
+def test_research_rejects_punctuation_only_question():
+    """
+    Verify that the versioned route rejects punctuation-only input at the API
+    validation layer.
+    """
+    response = client.post("/api/v1/research", json={"question": "."})
+
+    assert response.status_code == 422
+
+
+def test_research_rejects_ultra_short_question():
+    """
+    Verify that the versioned route rejects meaningless ultra-short input at
+    the API validation layer.
+    """
+    response = client.post("/api/v1/research", json={"question": "a"})
 
     assert response.status_code == 422

@@ -29,4 +29,4 @@ def health()->dict:
     Returns:
     dict: A minimal status payload indicating that the service is healthy.
     """
-    return {"status": "ok"}
+    return {"status": "OK"}
