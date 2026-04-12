@@ -9,10 +9,11 @@ the real research workflow.
 
 from fastapi.testclient import TestClient
 
-from focused_research_agent.api.app import app
+from  focused_research_agent.api.app import create_app
 from focused_research_agent.api.dependencies import get_research_use_case
 
 
+app =  create_app()
 client = TestClient(app)
 
 
