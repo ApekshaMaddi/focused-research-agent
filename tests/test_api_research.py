@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from  focused_research_agent.api.app import create_app
 from focused_research_agent.api.dependencies import get_research_use_case
-
+from focused_research_agent.application.exceptions import ApplicationError
 
 app =  create_app()
 client = TestClient(app)
@@ -220,3 +220,63 @@ def test_research_rejects_ultra_short_question():
     response = client.post("/api/v1/research", json={"question": "a"})
 
     assert response.status_code == 422
+
+def test_research_returns_structured_400_for_application_error():
+    """
+    Verify that the versioned research route returns the centralized 400
+    error JSON shape when the injected use case raises ApplicationError.
+    """
+    def fake_application_error_use_case(question: str) -> dict:
+        raise ApplicationError("User query must not be empty")
+
+    app.dependency_overrides[get_research_use_case] = (
+        lambda: fake_application_error_use_case
+    )
+
+    try:
+        response = client.post(
+            "/api/v1/research",
+            json={"question": "Valid looking question"},
+        )
+
+        assert response.status_code == 400
+        assert response.json() == {
+            "status_code": 400,
+            "error": "application_error",
+            "detail": "User query must not be empty",
+            "path": "/api/v1/research",
+        }
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_research_returns_structured_500_for_unexpected_exception():
+    """
+    Verify that the versioned research route returns the centralized 500
+    error JSON shape when the injected use case raises an unexpected
+    exception.
+    """
+    def fake_unexpected_error_use_case(question: str) -> dict:
+        raise RuntimeError("Unexpected test failure")
+
+    app.dependency_overrides[get_research_use_case] = (
+        lambda: fake_unexpected_error_use_case
+    )
+
+    local_client = TestClient(app, raise_server_exceptions=False)
+
+    try:
+        response = local_client.post(
+            "/api/v1/research",
+            json={"question": "Valid looking question"},
+        )
+
+        assert response.status_code == 500
+        assert response.json() == {
+            "status_code": 500,
+            "error": "internal_server_error",
+            "detail": "An unexpected internal error occurred",
+            "path": "/api/v1/research",
+        }
+    finally:
+        app.dependency_overrides.clear()
