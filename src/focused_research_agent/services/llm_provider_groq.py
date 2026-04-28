@@ -103,6 +103,44 @@ class GroqLLMProvider(LLMProvider):
 
         return None
 
+    @staticmethod
+    def _extract_text_from_content(content: str | list) -> str:
+        """Extract a plain text string from a LangChain response content value.
+
+        LangChain declares response.content as str | list[Any]. The str
+        branch is the normal path for text-only models such as Groq. The
+        list branch carries multi-modal content blocks (dicts with a "text"
+        key) used by vision or audio-capable models. This method handles
+        both branches so the rest of generate_json always works with a
+        plain string.
+
+        Args:
+            content: Raw content value returned by the LangChain response
+                object. Either a plain string or a list of content block
+                dicts.
+
+        Returns:
+            str: Plain text extracted from the content value. Returns an
+                empty string if the content is neither a str nor a list.
+        """
+        if isinstance(content, str):
+            return content
+
+        if isinstance(content, list):
+            # Each block is typically {"type": "text", "text": "..."}.
+            # Fall back to str(block) for any non-dict items.
+            text_parts = []
+
+            for block in content:
+                if isinstance(block, dict):
+                    text_parts.append(block.get("text", ""))
+                else:
+                    text_parts.append(str(block))
+
+            return "".join(text_parts)
+
+        return ""
+
     # ------------------------------------------------------------------
     # Instance method — uses self.llm (instance state) to invoke the
     # model, and calls the static helpers above.
@@ -128,7 +166,9 @@ class GroqLLMProvider(LLMProvider):
         """
         updated_prompt = self._build_json_only_prompt(prompt)
         response = self.llm.invoke(updated_prompt)
-        text = self._strip_code_fences((response.content or "").strip())
+
+        raw_text = self._extract_text_from_content(response.content)
+        text = self._strip_code_fences(raw_text.strip())
 
         try:
             return json.loads(text)

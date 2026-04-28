@@ -1,5 +1,5 @@
 import logging
-
+# noinspection PyPackageRequirements
 from tavily import TavilyClient
 
 from focused_research_agent.config.search_config import get_search_config
@@ -116,23 +116,28 @@ class TavilySearchClient(SearchProvider):
         title = (item.get("title") or "").strip()
         url = (item.get("url") or "").strip()
         snippet = (item.get("content") or "").strip()
-        score = item.get("score")
+        score_raw = item.get("score")
 
         if not title or not url:
             raise ValueError(
                 f"TavilySearchClient: Result missing title or url for query: {query}"
             )
 
-        if score is None:
+        if score_raw is None:
             raise ValueError(
                 f"TavilySearchClient: Result missing score for query: {query}"
             )
 
-        try:
-            score = float(score)
-        except (TypeError, ValueError):
+        if not isinstance(score_raw, (int, float, str)):
             raise ValueError(
-                f"TavilySearchClient: Invalid score in result for query: {query}"
+                f"TavilySearchClient: Invalid score type in result for query: {query}"
+            )
+
+        try:
+            score: float = float(score_raw)
+        except ValueError:
+            raise ValueError(
+                f"TavilySearchClient: Invalid score value in result for query: {query}"
             )
 
         normalized_result: SearchResult = {
