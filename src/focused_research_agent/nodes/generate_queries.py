@@ -1,17 +1,27 @@
+"""
+Query generation node for the Focused Research Agent.
+
+This module contains the node responsible for producing focused web-search
+queries from the scoped question. It uses the LLM provider to return 3 to 6
+short, diverse, search-engine-style queries that directly support answering
+the user's research question.
+"""
+
 from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
+
 
 def _build_generate_queries_prompt(state: ResearchState) -> str:
     """Build the LLM prompt for multi-query search planning.
 
-Args:
-    state: The current research state containing the scoped question,
-        original question, assumptions, and constraints.
+    Args:
+        state: The current research state containing the scoped question,
+            original question, assumptions, and constraints.
 
-Returns:
-    str: A prompt instructing the LLM to return 3 to 6 focused
-        search-engine-style queries as strict JSON.
-"""
+    Returns:
+        str: A prompt instructing the LLM to return 3 to 6 focused
+            search-engine-style queries as strict JSON.
+    """
     scope = (state.get("scope") or "").strip()
     user_query = (state.get("question") or "").strip()
     assumptions = state.get("assumptions") or []
@@ -55,16 +65,24 @@ Returns:
 
     return question_scope
 
-def _clean_generated_queries(llm_queries: object) -> list[str] :
-    """Build the LLM prompt for multi-query search planning.
+
+def _clean_generated_queries(llm_queries: object) -> list[str]:
+    """Validate and clean the raw query list returned by the LLM.
+
+    Ensures the LLM response is a list of non-empty strings, removes
+    blank entries, enforces a minimum of 3 valid queries, and caps the
+    result at 6 queries.
 
     Args:
-    state: The current research state containing the scoped question,
-        original question, assumptions, and constraints.
+        llm_queries: Raw value extracted from the LLM JSON response under
+            the "queries" key.
 
     Returns:
-    str: A prompt instructing the LLM to return 3 to 6 focused
-        search-engine-style queries as strict JSON.
+        list[str]: Cleaned list of between 3 and 6 non-empty query strings.
+
+    Raises:
+        ValueError: If llm_queries is not a list, contains non-string
+            items, or yields fewer than 3 valid queries after cleaning.
     """
     if not isinstance(llm_queries, list):
         raise ValueError("generate_queries: 'queries' must be a list")
@@ -84,6 +102,7 @@ def _clean_generated_queries(llm_queries: object) -> list[str] :
 
     return cleaned_list[:6]
 
+
 def generate_queries(state: ResearchState, llm_provider: LLMProvider) -> dict:
     """Generate focused web-search queries from the scoped question.
 
@@ -97,7 +116,7 @@ def generate_queries(state: ResearchState, llm_provider: LLMProvider) -> dict:
 
     Returns:
         dict: A partial state update containing generated queries and
-        status, or an errors field if generation fails.
+            status, or an errors field if generation fails.
     """
     base = (state.get("scope") or state.get("question") or "").strip()
 

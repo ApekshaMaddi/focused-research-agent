@@ -1,8 +1,10 @@
 import json
+import logging
+
 from langchain.chat_models import init_chat_model
+
 from focused_research_agent.config.llm_config import get_llm_config
 from focused_research_agent.interfaces.llm_interface import LLMProvider
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,14 @@ class GroqLLMProvider(LLMProvider):
             api_key=self.llm_config["api_key"],
         )
 
-    def _build_json_only_prompt(self, prompt: str) -> str:
+    # ------------------------------------------------------------------
+    # Static helpers — pure functions that support the provider but do
+    # not read or modify any instance state. @staticmethod signals this
+    # intent explicitly and prevents accidental use of self.
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _build_json_only_prompt(prompt: str) -> str:
         """Validate the prompt and append a strict JSON-only instruction.
 
         Args:
@@ -42,8 +51,8 @@ class GroqLLMProvider(LLMProvider):
             + "\nReturn ONLY valid JSON. No markdown. No backticks. No extra text."
         )
 
-
-    def _strip_code_fences(self, text: str) -> str:
+    @staticmethod
+    def _strip_code_fences(text: str) -> str:
         """Remove surrounding triple-backtick code fences from LLM output.
 
         This handles responses such as ```json ... ``` and returns the
@@ -68,8 +77,8 @@ class GroqLLMProvider(LLMProvider):
 
         return text
 
-
-    def _extract_json_candidate(self, text: str) -> str | None:
+    @staticmethod
+    def _extract_json_candidate(text: str) -> str | None:
         """Extract a likely JSON object or array substring from mixed text.
 
         The method looks for the outermost JSON object first and, if not
@@ -94,6 +103,10 @@ class GroqLLMProvider(LLMProvider):
 
         return None
 
+    # ------------------------------------------------------------------
+    # Instance method — uses self.llm (instance state) to invoke the
+    # model, and calls the static helpers above.
+    # ------------------------------------------------------------------
 
     def generate_json(self, prompt: str) -> dict:
         """Generate structured JSON from a prompt using Groq.
