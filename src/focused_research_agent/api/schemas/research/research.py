@@ -69,6 +69,12 @@ class ResearchResponse(BaseModel):
     application layer and provides a stable transport-level response shape
     for clients.
 
+    The errors field is typed as list[str] — not list[str] | None — because
+    the application layer's normalize_state always returns errors as a list,
+    defaulting to an empty list when no errors occurred. This makes the
+    contract explicit: callers can always iterate over errors safely without
+    a None check.
+
     Attributes:
         run_id: Unique identifier for the research run.
         question: Original user question.
@@ -78,7 +84,7 @@ class ResearchResponse(BaseModel):
         sources: Normalized source entries used in synthesis.
         answer: Final synthesized answer.
         citations: Citation URLs supporting the answer.
-        errors: Collected workflow errors, if any.
+        errors: Collected workflow errors. Always a list; empty when none.
     """
 
     run_id: str
@@ -89,4 +95,4 @@ class ResearchResponse(BaseModel):
     sources: list[SourceResponse] | None
     answer: str | None
     citations: list[str] | None
-    errors: list[str] | None
+    errors: list[str]
