@@ -9,11 +9,11 @@ the real research workflow.
 
 from fastapi.testclient import TestClient
 
-from  focused_research_agent.api.app import create_app
+from focused_research_agent.api.app import create_app
 from focused_research_agent.api.dependencies import get_research_use_case
 from focused_research_agent.application.exceptions import ApplicationError
 
-app =  create_app()
+app = create_app()
 client = TestClient(app)
 
 
@@ -91,8 +91,8 @@ def test_research_returns_structured_success_response():
     success response when the dependency provides a successful research
     result.
     """
-    app.dependency_overrides[get_research_use_case] = (
-        lambda: fake_success_research_question
+    app.dependency_overrides[get_research_use_case] = lambda: (
+        fake_success_research_question
     )
 
     try:
@@ -135,8 +135,8 @@ def test_research_returns_error_response_shape():
     Verify that the versioned research route returns the expected error-shaped
     response when the dependency provides a graph-style error result.
     """
-    app.dependency_overrides[get_research_use_case] = (
-        lambda: fake_error_research_question
+    app.dependency_overrides[get_research_use_case] = lambda: (
+        fake_error_research_question
     )
 
     try:
@@ -221,16 +221,18 @@ def test_research_rejects_ultra_short_question():
 
     assert response.status_code == 422
 
+
 def test_research_returns_structured_400_for_application_error():
     """
     Verify that the versioned research route returns the centralized 400
     error JSON shape when the injected use case raises ApplicationError.
     """
+
     def fake_application_error_use_case(question: str) -> dict:
         raise ApplicationError("User query must not be empty")
 
-    app.dependency_overrides[get_research_use_case] = (
-        lambda: fake_application_error_use_case
+    app.dependency_overrides[get_research_use_case] = lambda: (
+        fake_application_error_use_case
     )
 
     try:
@@ -256,11 +258,12 @@ def test_research_returns_structured_500_for_unexpected_exception():
     error JSON shape when the injected use case raises an unexpected
     exception.
     """
+
     def fake_unexpected_error_use_case(question: str) -> dict:
         raise RuntimeError("Unexpected test failure")
 
-    app.dependency_overrides[get_research_use_case] = (
-        lambda: fake_unexpected_error_use_case
+    app.dependency_overrides[get_research_use_case] = lambda: (
+        fake_unexpected_error_use_case
     )
 
     local_client = TestClient(app, raise_server_exceptions=False)

@@ -26,6 +26,7 @@ Why it matters:
 - supports the state-based Option B error model
 """
 
+
 def make_initial_state(question: str) -> ResearchState:
     return {
         "run_id": "",

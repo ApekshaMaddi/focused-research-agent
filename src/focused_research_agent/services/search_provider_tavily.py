@@ -1,4 +1,5 @@
 import logging
+
 # noinspection PyPackageRequirements
 from tavily import TavilyClient
 
