@@ -16,6 +16,8 @@ Why it matters:
 - provides quick confidence that the full workflow wiring works
 - acts as a fast integration-style test without real API calls
 """
+
+
 def make_initial_state(question: str) -> ResearchState:
     return {
         "run_id": "",

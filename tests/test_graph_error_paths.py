@@ -1,5 +1,3 @@
-
-import importlib
 """
 Focused graph-level tests for error routing behavior.
 
@@ -15,6 +13,8 @@ Why it matters:
 - verifies the Option B state-based error routing design
 - proves that graph routing changes correctly when errors are present
 """
+
+import importlib
 from focused_research_agent.state import ResearchState
 
 

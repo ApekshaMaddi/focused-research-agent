@@ -4,6 +4,7 @@ import focused_research_agent.config.llm_config as llm_config_module
 import focused_research_agent.config.search_config as search_config_module
 import focused_research_agent.services.llm_factory as llm_factory_module
 import focused_research_agent.services.search_factory as search_factory_module
+
 """
 Tests for configuration loading and provider factory selection.
 
@@ -21,6 +22,7 @@ Why it matters:
 - ensures the app fails early and clearly on setup errors
 - verifies provider selection logic without constructing real providers
 """
+
 
 class FakeGroqLLMProvider:
     pass

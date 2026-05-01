@@ -96,10 +96,10 @@ class GroqLLMProvider(LLMProvider):
         arr_end = text.rfind("]")
 
         if obj_start != -1 and obj_end != -1 and obj_start < obj_end:
-            return text[obj_start: obj_end + 1]
+            return text[obj_start : obj_end + 1]
 
         if arr_start != -1 and arr_end != -1 and arr_start < arr_end:
-            return text[arr_start: arr_end + 1]
+            return text[arr_start : arr_end + 1]
 
         return None
 

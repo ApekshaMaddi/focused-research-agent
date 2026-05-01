@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
 
-INVALID_LLM_RESPONSE_ERROR_MESSAGE="Invalid response obtained from LLM"
+INVALID_LLM_RESPONSE_ERROR_MESSAGE = "Invalid response obtained from LLM"
 
 # This is a lightweight heuristic for ranking, not a full trust system
 _DOMAIN_BONUSES = {
@@ -23,7 +23,6 @@ _DOMAIN_PENALTIES = {
     "tiktok.com": -3.0,
     "instagram.com": -3.0,
 }
-
 
 
 def _extract_domain(url: str) -> str:
@@ -78,13 +77,13 @@ def _get_rank_score(source: dict) -> float:
 def _collect_valid_sources(sources: list[dict]) -> list[dict]:
     """Validate, normalize, and rank candidate sources for synthesis.
 
-       Args:
-           sources: Raw source items from the research state.
+    Args:
+        sources: Raw source items from the research state.
 
-       Returns:
-           list[dict]: Ranked source dictionaries containing title, url,
-           snippet, source, and score.
-       """
+    Returns:
+        list[dict]: Ranked source dictionaries containing title, url,
+        snippet, source, and score.
+    """
 
     valid_sources = []
 
@@ -199,22 +198,18 @@ def _validate_synthesis_response(response: object) -> tuple[str, list]:
     """
 
     if not isinstance(response, dict):
-
         raise ValueError(INVALID_LLM_RESPONSE_ERROR_MESSAGE)
-
 
     answer = response.get("answer")
     citations = response.get("citations")
 
     if not isinstance(answer, str) or not answer.strip():
-
         raise ValueError(INVALID_LLM_RESPONSE_ERROR_MESSAGE)
-
 
     if not isinstance(citations, list) or not citations:
-
         raise ValueError(INVALID_LLM_RESPONSE_ERROR_MESSAGE)
     return (answer, citations)
+
 
 def _clean_citations(citations: list, allowed_urls: set[str]) -> list[str]:
     """Validate, deduplicate, and filter returned citations.
@@ -243,7 +238,9 @@ def _clean_citations(citations: list, allowed_urls: set[str]) -> list[str]:
             raise ValueError("Empty citation returned by LLM")
 
         if citation not in allowed_urls:
-            raise ValueError(f"synthesize_answer: LLM returned unknown citation URL: {citation}")
+            raise ValueError(
+                f"synthesize_answer: LLM returned unknown citation URL: {citation}"
+            )
 
         if citation not in seen_citations:
             seen_citations.add(citation)
@@ -252,6 +249,7 @@ def _clean_citations(citations: list, allowed_urls: set[str]) -> list[str]:
     if not cleaned_citations:
         raise ValueError("No valid citations found")
     return cleaned_citations
+
 
 def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     """Synthesize a final answer and citations from collected sources.
@@ -297,7 +295,6 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
         cleaned_citations = _clean_citations(citations, allowed_urls)
     except ValueError as e:
         return {"errors": [str(e)]}
-
 
     return {
         "answer": answer.strip(),

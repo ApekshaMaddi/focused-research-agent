@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
-from  focused_research_agent.api.app import create_app
+from focused_research_agent.api.app import create_app
 
-app =  create_app()
+app = create_app()
 client = TestClient(app)
 
 
