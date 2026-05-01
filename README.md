@@ -62,20 +62,27 @@ Each layer has one job and knows nothing about the layers above it. The LangGrap
 
 ## 🧠 LangGraph Workflow
 
-```
-START
-  → init_run          (generate run ID, validate input)
-  → scope_question    (LLM clarifies research scope)
-  → generate_queries  (LLM generates 3–6 search queries)
-  → search_web        (Tavily executes all queries)
-  → synthesize_answer (LLM synthesizes answer with citations)
-  → finalize_run      (mark run completed or failed)
-END
+The graph below shows the compiled LangGraph workflow. Each box is a node — a discrete step in the research pipeline. The solid arrows are the happy path. The dashed arrows are the error routing paths.
 
-Any node failure → handle_error (state-based routing)
-```
+![LangGraph Workflow](src/focused_research_agent/tools/diagrams/graph.png)
 
-**State-based error routing:** Every node records errors in `state["errors"]`. A conditional edge after each node checks for errors and routes to `handle_error` if any are found. The graph never raises exceptions — it always returns a final state.
+### What each node does
+
+| Node | Responsibility |
+|---|---|
+| `init_run` | Generates a unique run ID and validates that a question was provided |
+| `scope_question` | Sends the question to the LLM to produce a focused scope, assumptions, and constraints |
+| `generate_queries` | Sends the scope to the LLM to produce 3–6 targeted web search queries |
+| `search_web` | Executes all queries through Tavily and collects deduplicated, normalized sources |
+| `synthesize_answer` | Sends the top-ranked sources to the LLM to produce a concise answer with citations |
+| `finalize_run` | Marks the run as `completed` if an answer exists and no errors occurred, otherwise `error` |
+| `handle_error` | Terminal error node — logs all recorded errors and marks the run as `error` |
+
+### How error routing works
+
+Every node is followed by a conditional edge that calls `route_after_node(state)`. This function checks whether `state["errors"]` contains any entries. If errors exist, the graph routes to `handle_error`. If not, it continues to the next node.
+
+This means errors are never silently swallowed and exceptions never bubble up through the graph. A node that encounters a problem records it in `state["errors"]` and returns — the routing logic handles the rest. The graph always terminates cleanly at `__end__`, regardless of which path was taken.
 
 ---
 
