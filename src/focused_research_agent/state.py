@@ -14,3 +14,5 @@ class ResearchState(TypedDict):
     status: str
     errors: list[str]
     debug: dict | None
+    conversation_id: str | None
+    conversation_history: list[dict] | None

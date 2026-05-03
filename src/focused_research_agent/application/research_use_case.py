@@ -115,6 +115,8 @@ def make_initial_state(question: str) -> ResearchState:
         "status": "started",
         "errors": [],
         "debug": None,
+        "conversation_id": None,
+        "conversation_history": None,
     }
 
     return initial_state
