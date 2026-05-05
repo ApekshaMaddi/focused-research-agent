@@ -145,12 +145,14 @@ def get_conversation_history(
 
     history = []
     for run in runs:
-        history.append({
-            "turn": run.turn_number,
-            "question": run.question,
-            "answer": run.answer,
-            "scope": run.scope,
-        })
+        history.append(
+            {
+                "turn": run.turn_number,
+                "question": run.question,
+                "answer": run.answer,
+                "scope": run.scope,
+            }
+        )
 
     return history
 
@@ -180,11 +182,13 @@ def get_all_conversations(db: Session) -> list[dict]:
 
     conversations = []
     for run in runs:
-        conversations.append({
-            "conversation_id": run.conversation_id,
-            "title": run.conversation_title,
-            "created_at": run.created_at.isoformat(),
-        })
+        conversations.append(
+            {
+                "conversation_id": run.conversation_id,
+                "title": run.conversation_title,
+                "created_at": run.created_at.isoformat(),
+            }
+        )
 
     return conversations
 
@@ -217,18 +221,20 @@ def get_conversation_turns(
 
     turns = []
     for run in runs:
-        turns.append({
-            "turn_number": run.turn_number,
-            "run_id": run.run_id,
-            "question": run.question,
-            "status": run.status,
-            "scope": run.scope,
-            "queries": _deserialize(run.queries),
-            "sources": _deserialize(run.sources),
-            "answer": run.answer,
-            "citations": _deserialize(run.citations),
-            "errors": _deserialize(run.errors),
-            "created_at": run.created_at.isoformat(),
-        })
+        turns.append(
+            {
+                "turn_number": run.turn_number,
+                "run_id": run.run_id,
+                "question": run.question,
+                "status": run.status,
+                "scope": run.scope,
+                "queries": _deserialize(run.queries),
+                "sources": _deserialize(run.sources),
+                "answer": run.answer,
+                "citations": _deserialize(run.citations),
+                "errors": _deserialize(run.errors),
+                "created_at": run.created_at.isoformat(),
+            }
+        )
 
     return turns

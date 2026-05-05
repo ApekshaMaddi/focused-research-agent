@@ -19,7 +19,6 @@ coordinates use-case execution while keeping terminal, HTTP, and
 database concerns out of the core execution path.
 """
 
-
 import uuid
 import logging
 from sqlalchemy.orm import Session
@@ -42,10 +41,10 @@ from focused_research_agent.state import ResearchState
 logger = logging.getLogger(__name__)
 MAX_HISTORY_TURNS = 5
 
+
 def _build_chat_initial_state(
-        question: str,
-        conversation_id: str,
-        conversation_history: list[dict] | None)-> ResearchState:
+    question: str, conversation_id: str, conversation_history: list[dict] | None
+) -> ResearchState:
     """
     Build the initial graph state for a conversation-aware research run.
 
@@ -66,7 +65,8 @@ def _build_chat_initial_state(
     state["conversation_history"] = conversation_history
     return state
 
-def execute_chat_turn(db: Session, conversation_id: str| None, question: str) -> dict:
+
+def execute_chat_turn(db: Session, conversation_id: str | None, question: str) -> dict:
     """
     Execute one turn of a conversation-aware research session.
 
@@ -98,10 +98,11 @@ def execute_chat_turn(db: Session, conversation_id: str| None, question: str) ->
         raise ApplicationError(str(exc)) from exc
 
     if conversation_id is None:
-        conversation_id = str(uuid.uuid4())   # type: ignore[attr-defined]
+        conversation_id = str(uuid.uuid4())  # type: ignore[attr-defined]
 
-
-    conversation_history = get_conversation_history(db, conversation_id, MAX_HISTORY_TURNS)
+    conversation_history = get_conversation_history(
+        db, conversation_id, MAX_HISTORY_TURNS
+    )
 
     if conversation_history:
         history = conversation_history
@@ -112,7 +113,7 @@ def execute_chat_turn(db: Session, conversation_id: str| None, question: str) ->
         turn_number = len(history) + 1
     else:
         turn_number = 1
-    
+
     graph = build_graph()
     initial_state = _build_chat_initial_state(user_query, conversation_id, history)
     final_state = graph.invoke(initial_state)
@@ -120,7 +121,7 @@ def execute_chat_turn(db: Session, conversation_id: str| None, question: str) ->
 
     try:
         save_run(db, result, conversation_id, turn_number)
-    except Exception: # noqa: BLE001
+    except Exception:  # noqa: BLE001
         logger.exception("Failed to save chat run to database")
 
     result["conversation_id"] = conversation_id

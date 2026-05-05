@@ -213,9 +213,7 @@ def test_execute_chat_turn_raises_for_non_string_question(db, monkeypatch):
         execute_chat_turn(db=db, conversation_id=None, question=123)  # type: ignore
 
 
-def test_execute_chat_turn_raises_for_punctuation_only_question(
-    db, monkeypatch
-):
+def test_execute_chat_turn_raises_for_punctuation_only_question(db, monkeypatch):
     monkeypatch.setattr(chat_use_case_module, "build_graph", fake_build_graph)
 
     with pytest.raises(ApplicationError):
@@ -227,14 +225,10 @@ def test_execute_chat_turn_raises_for_punctuation_only_question(
 # ---------------------------------------------------------------------------
 
 
-def test_execute_chat_turn_generates_conversation_id_when_none(
-    db, monkeypatch
-):
+def test_execute_chat_turn_generates_conversation_id_when_none(db, monkeypatch):
     monkeypatch.setattr(chat_use_case_module, "build_graph", fake_build_graph)
 
-    result = execute_chat_turn(
-        db=db, conversation_id=None, question="What is AI?"
-    )
+    result = execute_chat_turn(db=db, conversation_id=None, question="What is AI?")
 
     assert result["conversation_id"] is not None
     assert len(result["conversation_id"]) > 0
@@ -252,17 +246,11 @@ def test_execute_chat_turn_reuses_provided_conversation_id(db, monkeypatch):
     assert result["conversation_id"] == "conv-existing-123"
 
 
-def test_execute_chat_turn_two_calls_with_none_generate_different_ids(
-    db, monkeypatch
-):
+def test_execute_chat_turn_two_calls_with_none_generate_different_ids(db, monkeypatch):
     monkeypatch.setattr(chat_use_case_module, "build_graph", fake_build_graph)
 
-    result1 = execute_chat_turn(
-        db=db, conversation_id=None, question="What is AI?"
-    )
-    result2 = execute_chat_turn(
-        db=db, conversation_id=None, question="What is ML?"
-    )
+    result1 = execute_chat_turn(db=db, conversation_id=None, question="What is AI?")
+    result2 = execute_chat_turn(db=db, conversation_id=None, question="What is ML?")
 
     assert result1["conversation_id"] != result2["conversation_id"]
 
@@ -272,14 +260,10 @@ def test_execute_chat_turn_two_calls_with_none_generate_different_ids(
 # ---------------------------------------------------------------------------
 
 
-def test_execute_chat_turn_sets_turn_number_to_1_for_first_turn(
-    db, monkeypatch
-):
+def test_execute_chat_turn_sets_turn_number_to_1_for_first_turn(db, monkeypatch):
     monkeypatch.setattr(chat_use_case_module, "build_graph", fake_build_graph)
 
-    result = execute_chat_turn(
-        db=db, conversation_id=None, question="What is AI?"
-    )
+    result = execute_chat_turn(db=db, conversation_id=None, question="What is AI?")
 
     assert result["turn_number"] == 1
 
@@ -308,9 +292,7 @@ def test_execute_chat_turn_sets_turn_number_to_2_for_follow_up(
 def test_execute_chat_turn_returns_expected_result_shape(db, monkeypatch):
     monkeypatch.setattr(chat_use_case_module, "build_graph", fake_build_graph)
 
-    result = execute_chat_turn(
-        db=db, conversation_id=None, question="What is AI?"
-    )
+    result = execute_chat_turn(db=db, conversation_id=None, question="What is AI?")
 
     assert "run_id" in result
     assert "question" in result
@@ -323,9 +305,7 @@ def test_execute_chat_turn_returns_expected_result_shape(db, monkeypatch):
 def test_execute_chat_turn_persists_run_to_database(db, monkeypatch):
     monkeypatch.setattr(chat_use_case_module, "build_graph", fake_build_graph)
 
-    result = execute_chat_turn(
-        db=db, conversation_id=None, question="What is AI?"
-    )
+    result = execute_chat_turn(db=db, conversation_id=None, question="What is AI?")
 
     from focused_research_agent.database.repository import get_conversation_turns
 
@@ -335,9 +315,7 @@ def test_execute_chat_turn_persists_run_to_database(db, monkeypatch):
     assert turns[0]["question"] == "What is AI?"
 
 
-def test_execute_chat_turn_returns_result_even_when_save_fails(
-    db, monkeypatch
-):
+def test_execute_chat_turn_returns_result_even_when_save_fails(db, monkeypatch):
     monkeypatch.setattr(chat_use_case_module, "build_graph", fake_build_graph)
 
     def fake_save_run(*args, **kwargs):
@@ -345,9 +323,7 @@ def test_execute_chat_turn_returns_result_even_when_save_fails(
 
     monkeypatch.setattr(chat_use_case_module, "save_run", fake_save_run)
 
-    result = execute_chat_turn(
-        db=db, conversation_id=None, question="What is AI?"
-    )
+    result = execute_chat_turn(db=db, conversation_id=None, question="What is AI?")
 
     assert result["answer"] is not None
     assert result["status"] == "completed"

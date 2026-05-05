@@ -120,7 +120,10 @@ def _collect_valid_sources(sources: list[dict]) -> list[dict]:
 
     return sorted(valid_sources, key=_get_rank_score, reverse=True)
 
-def _build_synthesis_prompt(question: str, sources: list[dict],conversation_history: list[dict] | None) -> str:
+
+def _build_synthesis_prompt(
+    question: str, sources: list[dict], conversation_history: list[dict] | None
+) -> str:
     """
     Build the LLM prompt for final answer synthesis.
 
@@ -165,7 +168,6 @@ def _build_synthesis_prompt(question: str, sources: list[dict],conversation_hist
             "above conversation history where relevant."
         )
         conversation_context = "\n".join(context_lines) + "\n\n"
-
 
     return f"""{conversation_context}Return ONLY valid JSON. No markdown. No backticks. No extra text.
 

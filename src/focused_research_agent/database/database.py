@@ -14,7 +14,7 @@ from the application layer, graph layer, or API layer.
 
 from typing import Generator
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker,Session
+from sqlalchemy.orm import sessionmaker, Session
 from focused_research_agent.config.database_config import get_database_settings
 from focused_research_agent.database.models import Base
 
@@ -26,7 +26,8 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-def init_db()-> None:
+
+def init_db() -> None:
     """
     Create all database tables if they do not already exist.
 
@@ -38,6 +39,7 @@ def init_db()-> None:
         None
     """
     Base.metadata.create_all(bind=engine)
+
 
 def get_db() -> Generator[Session, None, None]:
     """

@@ -14,6 +14,8 @@ provider concern.
 from fastapi import APIRouter
 
 from focused_research_agent.api.routers.research import research_router
+from focused_research_agent.api.routers.chat import chat_router
+from focused_research_agent.api.routers.conversations import conversations_router
 
 
 def create_v1_router() -> APIRouter:
@@ -28,6 +30,8 @@ def create_v1_router() -> APIRouter:
     """
     router = APIRouter(prefix="/api/v1")
     router.include_router(research_router)
+    router.include_router(chat_router)
+    router.include_router(conversations_router)
     return router
 
 

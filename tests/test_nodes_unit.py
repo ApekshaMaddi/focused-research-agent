@@ -296,6 +296,7 @@ def test_handle_error_sets_error_status():
 
     assert result["status"] == "error"
 
+
 def test_synthesize_answer_uses_conversation_history_in_prompt(monkeypatch):
     """
     Verify that synthesize_answer passes conversation_history to the

@@ -19,6 +19,8 @@ from focused_research_agent.ui.exceptions import BackendUnavailableError
 
 _HEALTH_ENDPOINT = "/health"
 _RESEARCH_ENDPOINT = "/api/v1/research"
+_CHAT_ENDPOINT = "/api/v1/chat"
+_CONVERSATIONS_ENDPOINT = "/api/v1/conversations"
 
 
 class ResearchCallResult(TypedDict):
@@ -44,6 +46,38 @@ def check_health() -> bool:
         return response.status_code == 200
     except httpx.ConnectError:
         return False
+
+
+def _parse_post_response(response: httpx.Response) -> ResearchCallResult:
+    """
+    Parse an httpx response from a POST research or chat request
+    into a ResearchCallResult.
+
+    Handles HTTP 200, 400, 422, and any other status code. Does not
+    handle connection or timeout exceptions — those are caught by the
+    calling function.
+
+    Args:
+        response: The httpx response object from the POST request.
+
+    Returns:
+        ResearchCallResult: Parsed result with success, data, and
+            error fields populated based on the response status code.
+    """
+    if response.status_code == 200:
+        return {"success": True, "data": response.json(), "error": None}
+
+    if response.status_code == 400:
+        return {"success": False, "data": None, "error": response.json()["detail"]}
+
+    if response.status_code == 422:
+        return {"success": False, "data": None, "error": "Invalid question submitted."}
+
+    return {
+        "success": False,
+        "data": None,
+        "error": f"Unexpected error: {response.status_code}",
+    }
 
 
 def call_research(question: str) -> ResearchCallResult:
@@ -76,38 +110,127 @@ def call_research(question: str) -> ResearchCallResult:
             the user needs to start the backend before trying again.
     """
     settings = get_ui_settings()
-    return_dict: ResearchCallResult = {"success": False, "data": None, "error": None}
     try:
         response = httpx.post(
             f"{settings.api_base_url}{_RESEARCH_ENDPOINT}",
             json={"question": question},
             timeout=settings.request_timeout,
         )
-        if response.status_code == 200:
-            return_dict["success"] = True
-            return_dict["data"] = response.json()
-            return_dict["error"] = None
-            return return_dict
-        elif response.status_code == 400:
-            return_dict["success"] = False
-            return_dict["data"] = None
-            return_dict["error"] = response.json()["detail"]
-            return return_dict
-        elif response.status_code == 422:
-            return_dict["success"] = False
-            return_dict["data"] = None
-            return_dict["error"] = "Invalid question submitted."
-            return return_dict
-        else:
-            return_dict["success"] = False
-            return_dict["data"] = None
-            return_dict["error"] = f"Unexpected error: {response.status_code}"
+        return _parse_post_response(response)
     except httpx.ConnectError:
         raise BackendUnavailableError(
             f"Cannot connect to backend at {settings.api_base_url} — is FastAPI running?"
         )
     except httpx.TimeoutException:
-        return_dict["success"] = False
-        return_dict["data"] = None
-        return_dict["error"] = "Request timed out — research is taking too long."
-    return return_dict
+        return {
+            "success": False,
+            "data": None,
+            "error": "Request timed out — research is taking too long.",
+        }
+
+
+def call_chat(question: str, conversation_id: str | None) -> ResearchCallResult:
+    """
+    Send a chat turn to the FastAPI backend and return the result.
+
+    Makes a POST request to the chat endpoint with the user's question
+    and optional conversation ID. Returns a ResearchCallResult with the
+    same shape as call_research, but the data dict additionally contains
+    conversation_id and turn_number fields.
+
+    Args:
+        question: The user's research question for this turn.
+        conversation_id: Existing conversation UUID to continue, or
+            None to start a new conversation.
+
+    Returns:
+        ResearchCallResult: A typed dict with success, data, and error
+            keys. On success, data contains the full chat response
+            including conversation_id and turn_number.
+
+    Raises:
+        BackendUnavailableError: If the backend cannot be reached.
+    """
+    settings = get_ui_settings()
+    try:
+        response = httpx.post(
+            f"{settings.api_base_url}{_CHAT_ENDPOINT}",
+            json={"question": question, "conversation_id": conversation_id},
+            timeout=settings.request_timeout,
+        )
+        return _parse_post_response(response)
+    except httpx.ConnectError:
+        raise BackendUnavailableError(
+            f"Cannot connect to backend at {settings.api_base_url} — is FastAPI running?"
+        )
+    except httpx.TimeoutException:
+        return {
+            "success": False,
+            "data": None,
+            "error": "Request timed out — research is taking too long.",
+        }
+
+
+def get_conversations() -> list[dict]:
+    """
+    Fetch the list of all past conversations from the backend.
+
+    Makes a GET request to the conversations endpoint. Returns an
+    empty list on any error so that history panel failures never
+    block the chat UI from functioning.
+
+    Returns:
+        list[dict]: List of conversation summary dicts containing
+            conversation_id, title, and created_at keys.
+            Empty list if the request fails for any reason.
+    """
+    settings = get_ui_settings()
+    try:
+        response = httpx.get(
+            f"{settings.api_base_url}{_CONVERSATIONS_ENDPOINT}",
+            timeout=settings.request_timeout,
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return []
+    except httpx.ConnectError:
+        return []
+
+    except httpx.TimeoutException:
+        return []
+
+
+def get_conversation(conversation_id: str) -> list[dict]:
+    """
+    Fetch all turns of a specific conversation from the backend.
+
+    Makes a GET request to the conversation detail endpoint. Returns
+    an empty list on any error so that history loading failures never
+    block the chat UI.
+
+    Args:
+        conversation_id: UUID string identifying the conversation to
+            fetch.
+
+    Returns:
+        list[dict]: List of complete turn dicts in chronological order.
+            Empty list if the request fails for any reason.
+    """
+    settings = get_ui_settings()
+    try:
+        response = httpx.get(
+            f"{settings.api_base_url}{_CONVERSATIONS_ENDPOINT}/{conversation_id}",
+            timeout=settings.request_timeout,
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return []
+    except httpx.ConnectError:
+        return []
+
+    except httpx.TimeoutException:
+        return []

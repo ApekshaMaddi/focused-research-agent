@@ -9,7 +9,7 @@ thin by separating dependency wiring from endpoint definitions.
 """
 
 from collections.abc import Callable
-
+from focused_research_agent.application import chat_use_case
 from focused_research_agent.application import research_use_case
 
 
@@ -26,3 +26,7 @@ def get_research_use_case() -> Callable[[str], dict]:
         and returns a structured research result.
     """
     return research_use_case.research_question
+
+
+def get_chat_use_case():
+    return chat_use_case.execute_chat_turn
