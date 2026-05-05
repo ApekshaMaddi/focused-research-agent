@@ -87,7 +87,7 @@ def call_research(question: str) -> ResearchCallResult:
     Makes a POST request to the versioned research endpoint with the user's
     question as the JSON body. Always returns a ResearchCallResult with three
     keys: success, data, and error. The shape is consistent across all
-    response paths so that app.py and views.py never have to guess what
+    response paths so that 1_🔍_Research.py and views.py never have to guess what
     they are receiving.
 
     Args:

@@ -26,8 +26,10 @@ dev = [
 
 [tool.coverage.run]
 omit = [
-    "src/focused_research_agent/ui/app.py",
     "src/focused_research_agent/ui/views.py",
+    "src/focused_research_agent/ui/Home.py",
+    "src/focused_research_agent/ui/pages/1_🔍_Research.py",
+    "src/focused_research_agent/ui/pages/2_💬_Chat.py",
 ]
 
 [build-system]
