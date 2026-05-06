@@ -295,3 +295,83 @@ def test_handle_error_sets_error_status():
     result = handle_error(state)
 
     assert result["status"] == "error"
+
+
+def test_synthesize_answer_uses_conversation_history_in_prompt(monkeypatch):
+    """
+    Verify that synthesize_answer passes conversation_history to the
+    prompt builder when it is present in state. The FakeLLM captures
+    the prompt and we assert that prior turn content appears in it.
+    """
+    captured_prompts = []
+
+    class FakeCapturingLLMProvider:
+        def generate_json(self, prompt: str) -> dict:
+            captured_prompts.append(prompt)
+            return {
+                "answer": "Quantum computing has several limitations.",
+                "citations": ["https://example.com/overview"],
+            }
+
+    state = make_initial_state("What are its limitations?")
+    state["sources"] = [
+        {
+            "title": "Overview of the test topic",
+            "url": "https://example.com/overview",
+            "snippet": "A high-level overview of the test topic.",
+            "source": "mock",
+            "score": 0.95,
+        },
+    ]
+    state["conversation_history"] = [
+        {
+            "turn": 1,
+            "question": "What is quantum computing?",
+            "answer": "Quantum computing uses quantum mechanical phenomena.",
+            "scope": "Explain quantum computing clearly",
+        }
+    ]
+
+    result = synthesize_answer(state, FakeCapturingLLMProvider())
+
+    assert result.get("answer") is not None
+    assert len(captured_prompts) == 1
+    assert "CONVERSATION HISTORY" in captured_prompts[0]
+    assert "What is quantum computing?" in captured_prompts[0]
+
+
+def test_synthesize_answer_with_no_conversation_history_excludes_context(
+    monkeypatch,
+):
+    """
+    Verify that synthesize_answer does not include conversation context
+    in the prompt when conversation_history is None. Confirms backward
+    compatibility with the single-turn research flow.
+    """
+    captured_prompts = []
+
+    class FakeCapturingLLMProvider:
+        def generate_json(self, prompt: str) -> dict:
+            captured_prompts.append(prompt)
+            return {
+                "answer": "Quantum computing uses quantum mechanics.",
+                "citations": ["https://example.com/overview"],
+            }
+
+    state = make_initial_state("What is quantum computing?")
+    state["sources"] = [
+        {
+            "title": "Overview of the test topic",
+            "url": "https://example.com/overview",
+            "snippet": "A high-level overview of the test topic.",
+            "source": "mock",
+            "score": 0.95,
+        },
+    ]
+    state["conversation_history"] = None
+
+    result = synthesize_answer(state, FakeCapturingLLMProvider())
+
+    assert result.get("answer") is not None
+    assert len(captured_prompts) == 1
+    assert "CONVERSATION HISTORY" not in captured_prompts[0]

@@ -18,6 +18,7 @@ from focused_research_agent.api.api_exception_handlers import (
 from focused_research_agent.api.routers.health import health_router
 from focused_research_agent.api.routers.v1 import api_v1_router
 from focused_research_agent.config.api_config import get_api_settings
+from focused_research_agent.database.database import init_db
 
 
 def register_routers(app: FastAPI) -> None:
@@ -51,6 +52,9 @@ def create_app() -> FastAPI:
         version=settings.version,
         debug=settings.debug,
     )
+
+    init_db()
+
     register_routers(app)
     register_exception_handlers(app)
     return app

@@ -263,7 +263,7 @@ Open two terminals:
 uv run uvicorn --factory focused_research_agent.api.app:create_app --reload
 
 # Terminal 2 — start the UI
-uv run streamlit run src/focused_research_agent/ui/app.py
+uv run streamlit run src/focused_research_agent/ui/1_🔍_Research.py
 ```
 
 UI available at: `http://localhost:8501`

@@ -194,3 +194,27 @@ def test_call_research_returns_error_on_timeout(monkeypatch):
     assert result["success"] is False
     assert result["data"] is None
     assert result["error"] == "Request timed out — research is taking too long."
+
+def test_call_chat_returns_success_result_on_200():
+    ...
+
+def test_call_chat_returns_error_on_400():
+    ...
+
+def test_call_chat_raises_backend_unavailable_on_connect_error():
+    ...
+
+def test_call_chat_returns_error_on_timeout():
+    ...
+
+def test_get_conversations_returns_list_on_200():
+    ...
+
+def test_get_conversations_returns_empty_list_on_connect_error():
+    ...
+
+def test_get_conversation_returns_list_on_200():
+    ...
+
+def test_get_conversation_returns_empty_list_on_connect_error():
+    ...

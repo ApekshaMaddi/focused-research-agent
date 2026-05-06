@@ -121,17 +121,29 @@ def _collect_valid_sources(sources: list[dict]) -> list[dict]:
     return sorted(valid_sources, key=_get_rank_score, reverse=True)
 
 
-def _build_synthesis_prompt(question: str, sources: list[dict]) -> str:
-    """Build the LLM prompt for final answer synthesis.
+def _build_synthesis_prompt(
+    question: str, sources: list[dict], conversation_history: list[dict] | None
+) -> str:
+    """
+    Build the LLM prompt for final answer synthesis.
+
+    Includes conversation history context when available so the LLM
+    can reference prior turns when answering follow-up questions. When
+    conversation_history is None or empty, the prompt is identical to
+    the single-turn research flow.
 
     Args:
         question: The original user question.
         sources: Ranked source dictionaries selected for synthesis.
+        conversation_history: Prior conversation turns from the
+            application layer, or None for single-turn research.
+            Each item contains turn, question, answer, and scope keys.
 
     Returns:
         str: A prompt instructing the LLM to return a concise answer
-        and 1 to 3 exact citation URLs as strict JSON.
+            and 1 to 3 exact citation URLs as strict JSON.
     """
+
     source_blocks = []
 
     for index, source in enumerate(sources, start=1):
@@ -145,8 +157,19 @@ def _build_synthesis_prompt(question: str, sources: list[dict]) -> str:
 
     joined_sources = "\n".join(source_blocks)
 
-    return f"""
-Return ONLY valid JSON. No markdown. No backticks. No extra text.
+    conversation_context = ""
+    if conversation_history:
+        context_lines = ["CONVERSATION HISTORY:"]
+        for turn in conversation_history:
+            context_lines.append(f"Turn {turn['turn']} — Q: {turn['question']}")
+            context_lines.append(f"         A: {turn['answer']}")
+        context_lines.append(
+            "\nAnswer the current question in the context of the "
+            "above conversation history where relevant."
+        )
+        conversation_context = "\n".join(context_lines) + "\n\n"
+
+    return f"""{conversation_context}Return ONLY valid JSON. No markdown. No backticks. No extra text.
 
 The JSON MUST have exactly these keys:
 - answer (string)
@@ -268,6 +291,7 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     """
     question = (state.get("question") or "").strip()
     sources = state.get("sources")
+    conversation_history = state.get("conversation_history")
 
     if not question:
         return {"errors": ["synthesize_answer: No question found"]}
@@ -283,7 +307,7 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     synthesis_sources = valid_sources[:6]
     allowed_urls = {source["url"] for source in synthesis_sources}
 
-    prompt = _build_synthesis_prompt(question, synthesis_sources)
+    prompt = _build_synthesis_prompt(question, synthesis_sources, conversation_history)
 
     try:
         response = llm_provider.generate_json(prompt)

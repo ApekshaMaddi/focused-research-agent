@@ -77,6 +77,8 @@ def test_make_initial_state_returns_expected_shape():
     assert result["status"] == "started"
     assert result["errors"] == []
     assert result["debug"] is None
+    assert result["conversation_id"] is None
+    assert result["conversation_history"] is None
 
 
 def test_research_question_raises_when_question_is_not_string():

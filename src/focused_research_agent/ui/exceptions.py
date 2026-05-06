@@ -19,7 +19,7 @@ class BackendUnavailableError(Exception):
     meaning the FastAPI server is not running or is not reachable at the
     configured UI_API_BASE_URL.
 
-    It is caught by app.py to render a clear, user-facing message telling the
+    It is caught by 1_🔍_Research.py to render a clear, user-facing message telling the
     user to start the backend before using the UI.
 
     Args:
