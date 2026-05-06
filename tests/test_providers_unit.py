@@ -1,12 +1,3 @@
-from types import SimpleNamespace
-
-import pytest
-
-import focused_research_agent.services.llm_provider_groq as llm_provider_module
-import focused_research_agent.services.search_provider_tavily as search_provider_module
-from focused_research_agent.services.llm_provider_groq import GroqLLMProvider
-from focused_research_agent.services.search_provider_tavily import TavilySearchClient
-
 """
 Unit tests for external provider implementations.
 
@@ -23,6 +14,15 @@ Why it matters:
 - verifies the reliability of code that interacts with external systems
 - ensures provider-level parsing and normalization are robust
 """
+
+from types import SimpleNamespace
+
+import pytest
+
+import focused_research_agent.services.llm_provider_groq as llm_provider_module
+import focused_research_agent.services.search_provider_tavily as search_provider_module
+from focused_research_agent.services.llm_provider_groq import GroqLLMProvider
+from focused_research_agent.services.search_provider_tavily import TavilySearchClient
 
 
 class FakeLLM:
@@ -272,3 +272,17 @@ def test_tavily_search_raises_when_score_missing(monkeypatch):
 
     with pytest.raises(ValueError, match="Result missing score"):
         provider.search(["query one"])
+
+def test_tavily_client_overrides_search_depth_when_provided(monkeypatch):
+    monkeypatch.setattr(
+        search_provider_module,    # ← change tavily_provider_module to this
+        "get_search_config",
+        fake_search_config,
+    )
+    monkeypatch.setattr(
+        search_provider_module,    # ← same here
+        "TavilyClient",
+        build_fake_tavily_client([]),  # ← use build_fake_tavily_client, not FakeTavilyClient directly
+    )
+    client = TavilySearchClient(search_depth="advanced")
+    assert client.search_config["search_depth"] == "advanced"

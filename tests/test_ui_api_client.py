@@ -24,9 +24,12 @@ import httpx
 import pytest
 
 import focused_research_agent.ui.api_client as api_client_module
-from focused_research_agent.ui.api_client import call_research, check_health
 from focused_research_agent.ui.exceptions import BackendUnavailableError
-
+from focused_research_agent.ui.api_client import (
+    call_research,
+    call_report,
+    check_health,
+)
 
 class FakeResponse:
     """Simulates an httpx response object for testing."""
@@ -195,26 +198,156 @@ def test_call_research_returns_error_on_timeout(monkeypatch):
     assert result["data"] is None
     assert result["error"] == "Request timed out — research is taking too long."
 
-def test_call_chat_returns_success_result_on_200():
-    ...
+def test_call_report_returns_success_result_on_200(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
 
-def test_call_chat_returns_error_on_400():
-    ...
+        def post(self, url, json, timeout):
+            return FakeResponse(200, {"run_id": "abc", "answer": "## Introduction\nTest"})
 
-def test_call_chat_raises_backend_unavailable_on_connect_error():
-    ...
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    result = call_report("What is AI?")
+    assert result["success"] is True
+    assert result["data"]["run_id"] == "abc"
 
-def test_call_chat_returns_error_on_timeout():
-    ...
 
-def test_get_conversations_returns_list_on_200():
-    ...
+def test_call_report_returns_error_on_400(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
 
-def test_get_conversations_returns_empty_list_on_connect_error():
-    ...
+        def post(self, url, json, timeout):
+            return FakeResponse(400, {"detail": "Bad question"})
 
-def test_get_conversation_returns_list_on_200():
-    ...
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    result = call_report("What is AI?")
+    assert result["success"] is False
+    assert result["error"] == "Bad question"
 
-def test_get_conversation_returns_empty_list_on_connect_error():
-    ...
+
+def test_call_report_raises_backend_unavailable_on_connect_error(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+
+        def post(self, url, json, timeout):
+            raise httpx.ConnectError("refused")
+
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    with pytest.raises(BackendUnavailableError):
+        call_report("What is AI?")
+
+
+def test_call_report_returns_error_on_timeout(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+
+        def post(self, url, json, timeout):
+            raise httpx.TimeoutException("timeout")
+
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    result = call_report("What is AI?")
+    assert result["success"] is False
+    assert "timed out" in result["error"]
+
+def test_call_chat_returns_success_result_on_200(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def post(self, url, json, timeout):
+            return FakeResponse(200, {"run_id": "chat-abc", "conversation_id": "conv-1", "turn_number": 1})
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import call_chat
+    result = call_chat("What is AI?", None)
+    assert result["success"] is True
+    assert result["data"]["run_id"] == "chat-abc"
+
+
+def test_call_chat_returns_error_on_400(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def post(self, url, json, timeout):
+            return FakeResponse(400, {"detail": "Bad question"})
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import call_chat
+    result = call_chat("What is AI?", None)
+    assert result["success"] is False
+    assert result["error"] == "Bad question"
+
+
+def test_call_chat_raises_backend_unavailable_on_connect_error(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def post(self, url, json, timeout):
+            raise httpx.ConnectError("refused")
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import call_chat
+    with pytest.raises(BackendUnavailableError):
+        call_chat("What is AI?", None)
+
+
+def test_call_chat_returns_error_on_timeout(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def post(self, url, json, timeout):
+            raise httpx.TimeoutException("timeout")
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import call_chat
+    result = call_chat("What is AI?", None)
+    assert result["success"] is False
+    assert "timed out" in result["error"]
+
+
+def test_get_conversations_returns_list_on_200(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def get(self, url, timeout):
+            return FakeResponse(200, [{"conversation_id": "conv-1", "title": "Test"}])
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import get_conversations
+    result = get_conversations()
+    assert len(result) == 1
+    assert result[0]["conversation_id"] == "conv-1"
+
+
+def test_get_conversations_returns_empty_list_on_connect_error(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def get(self, url, timeout):
+            raise httpx.ConnectError("refused")
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import get_conversations
+    result = get_conversations()
+    assert result == []
+
+
+def test_get_conversation_returns_list_on_200(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def get(self, url, timeout):
+            return FakeResponse(200, [{"turn_number": 1, "question": "What is AI?"}])
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import get_conversation
+    result = get_conversation("conv-1")
+    assert len(result) == 1
+    assert result[0]["turn_number"] == 1
+
+
+def test_get_conversation_returns_empty_list_on_connect_error(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def get(self, url, timeout):
+            raise httpx.ConnectError("refused")
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import get_conversation
+    result = get_conversation("conv-1")
+    assert result == []

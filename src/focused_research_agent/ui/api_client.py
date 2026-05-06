@@ -23,6 +23,7 @@ _CHAT_ENDPOINT = "/api/v1/chat"
 _CONVERSATIONS_ENDPOINT = "/api/v1/conversations"
 _REPORT_ENDPOINT = "/api/v1/report"
 
+_TIMEOUT_ERROR_MESSAGE = "Request timed out — research is taking too long."
 
 class ResearchCallResult(TypedDict):
     success: bool
@@ -126,7 +127,7 @@ def call_research(question: str) -> ResearchCallResult:
         return {
             "success": False,
             "data": None,
-            "error": "Request timed out — research is taking too long.",
+            "error": _TIMEOUT_ERROR_MESSAGE,
         }
 
 
@@ -168,7 +169,7 @@ def call_chat(question: str, conversation_id: str | None) -> ResearchCallResult:
         return {
             "success": False,
             "data": None,
-            "error": "Request timed out — research is taking too long.",
+            "error": _TIMEOUT_ERROR_MESSAGE,
         }
 
 
@@ -211,7 +212,7 @@ def call_report(question: str) -> ResearchCallResult:
         return {
             "success": False,
             "data": None,
-            "error": "Request timed out — research is taking too long.",
+            "error": _TIMEOUT_ERROR_MESSAGE,
         }
 
 
