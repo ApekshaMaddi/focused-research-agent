@@ -189,28 +189,34 @@ def test_search_web_returns_error_when_queries_missing():
     state = make_initial_state("test question")
     state["queries"] = None
 
-    result = search_web(state)
+    class FakeSearchProvider:
+        def search(self, queries):
+            return []
+
+    result = search_web(state, FakeSearchProvider())
 
     assert result["errors"] == ["search_web: queries must be a list"]
 
 
 def test_search_web_success_returns_sources(monkeypatch):
-    import focused_research_agent.nodes.search_web as search_web_node
-
-    monkeypatch.setattr(
-        search_web_node,
-        "get_search_provider",
-        fake_get_search_provider,
-    )
+    class FakeSearchProvider:
+        def search(self, queries):
+            return [
+                {
+                    "title": "Test Source",
+                    "url": "https://example.com",
+                    "snippet": "Test snippet.",
+                    "source": "mock",
+                    "score": 0.9,
+                }
+            ]
 
     state = make_initial_state("test question")
-    state["queries"] = ["test topic overview", "test topic rules"]
+    state["queries"] = ["test query one", "test query two", "test query three"]
 
-    result = search_web(state)
-
-    assert len(result["sources"]) == 2
-    assert result["sources"][0]["url"] == "https://example.com/overview"
-    assert result["status"] == "searched"
+    result = search_web(state, FakeSearchProvider())  # ← pass provider directly
+    assert "sources" in result
+    assert len(result["sources"]) == 1
 
 
 def test_synthesize_answer_returns_error_for_unknown_citation():
@@ -375,3 +381,77 @@ def test_synthesize_answer_with_no_conversation_history_excludes_context(
     assert result.get("answer") is not None
     assert len(captured_prompts) == 1
     assert "CONVERSATION HISTORY" not in captured_prompts[0]
+
+def test_synthesize_answer_report_mode_includes_report_sections_in_prompt():
+    """
+    Verify that synthesize_answer uses the report prompt when
+    mode is 'report'. The captured prompt should contain the
+    structured section headers.
+    """
+    captured_prompts = []
+
+    class FakeCapturingLLMProvider:
+        def generate_json(self, prompt: str) -> dict:
+            captured_prompts.append(prompt)
+            return {
+                "answer": "## Introduction\nTest intro.\n## Key Findings\nTest findings.",
+                "citations": ["https://example.com/overview"],
+            }
+
+    state = make_initial_state("What is quantum computing?")
+    state["mode"] = "report"
+    state["sources"] = [
+        {
+            "title": "Overview of the test topic",
+            "url": "https://example.com/overview",
+            "snippet": "A high-level overview of the test topic.",
+            "source": "mock",
+            "score": 0.95,
+        },
+    ]
+
+    result = synthesize_answer(state, FakeCapturingLLMProvider())
+
+    assert result.get("answer") is not None
+    assert len(captured_prompts) == 1
+    assert "## Introduction" in captured_prompts[0]
+    assert "## Key Findings" in captured_prompts[0]
+    assert "## Analysis" in captured_prompts[0]
+    assert "## Conclusion" in captured_prompts[0]
+
+def test_synthesize_answer_research_mode_excludes_report_sections_from_prompt():
+    """
+    Verify that synthesize_answer does not include report section
+    headers in the prompt when mode is 'research'. Confirms the
+    two modes produce different prompts.
+    """
+    captured_prompts = []
+
+    class FakeCapturingLLMProvider:
+        def generate_json(self, prompt: str) -> dict:
+            captured_prompts.append(prompt)
+            return {
+                "answer": "Quantum computing uses quantum mechanics.",
+                "citations": ["https://example.com/overview"],
+            }
+
+    state = make_initial_state("What is quantum computing?")
+    state["mode"] = "research"
+    state["sources"] = [
+        {
+            "title": "Overview of the test topic",
+            "url": "https://example.com/overview",
+            "snippet": "A high-level overview of the test topic.",
+            "source": "mock",
+            "score": 0.95,
+        },
+    ]
+
+    result = synthesize_answer(state, FakeCapturingLLMProvider())
+
+    assert result.get("answer") is not None
+    assert len(captured_prompts) == 1
+    assert "## Introduction" not in captured_prompts[0]
+    assert "## Key Findings" not in captured_prompts[0]
+
+

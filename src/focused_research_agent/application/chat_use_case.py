@@ -63,6 +63,7 @@ def _build_chat_initial_state(
     state = make_initial_state(question)
     state["conversation_id"] = conversation_id
     state["conversation_history"] = conversation_history
+    state["mode"] = "research"
     return state
 
 

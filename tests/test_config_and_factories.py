@@ -28,8 +28,9 @@ class FakeGroqLLMProvider:
     pass
 
 
-class FakeTavilySearchClient:
-    pass
+class FakeTavilySearchClient():
+    def __init__(self, search_depth: str | None = None):  # ← add this
+        pass
 
 
 def fake_llm_config_groq():

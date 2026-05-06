@@ -206,6 +206,68 @@ Sources:
 """.strip()
 
 
+def _build_report_prompt(question: str, sources: list[dict]) -> str:
+    """
+    Build the LLM prompt for structured report generation.
+
+    Instructs the LLM to produce a long-form research report with
+    four sections: Introduction, Key Findings, Analysis, and
+    Conclusion. Uses all available sources for comprehensive coverage.
+
+    Args:
+        question: The original user question.
+        sources: Ranked source dictionaries selected for synthesis.
+
+    Returns:
+        str: A prompt instructing the LLM to return a structured
+            markdown report and 3 to 5 citation URLs as strict JSON.
+    """
+    source_blocks = []
+
+    for index, source in enumerate(sources, start=1):
+        source_block = (
+            f"Source {index}\n"
+            f"Title: {source['title']}\n"
+            f"URL: {source['url']}\n"
+            f"Snippet: {source['snippet']}\n"
+        )
+        source_blocks.append(source_block)
+
+    joined_sources = "\n".join(source_blocks)
+
+    return f"""Return ONLY valid JSON with exactly these keys:
+    - answer (string) — a full structured report in markdown format with these sections:
+    ## Introduction
+    ## Key Findings
+    ## Analysis
+    ## Conclusion
+    - citations (list of 3 to 5 URLs)
+
+    Rules:
+    - Write each section with 2-4 paragraphs of substantive content
+    - Use all provided sources to build a comprehensive report
+    - Every claim must be supported by the sources
+    - Do NOT invent facts or citations
+    - Every citation URL must match a provided source URL exactly
+    - Do NOT mention "sources", "snippets", or "citations" inside the answer
+
+    Example JSON output:
+    {{
+      "answer": "An equinox is when day and night are nearly equal in length, while a solstice is when the Sun reaches its highest or lowest point in the sky, creating the longest or shortest day of the year. Equinoxes mark the start of spring and autumn. Solstices mark the start of summer and winter.",
+      "citations": [
+        "https://example.com/source1",
+        "https://example.com/source2"
+      ]
+    }}
+
+    User question:
+    {question}
+
+    Sources:
+    {joined_sources}
+    """.strip()
+
+
 def _validate_synthesis_response(response: object) -> tuple[str, list]:
     """Validate the raw LLM synthesis response.
 
@@ -289,6 +351,7 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
         dict: A partial state update containing answer, citations, and
         status, or an errors field if synthesis fails.
     """
+    mode = state.get("mode")
     question = (state.get("question") or "").strip()
     sources = state.get("sources")
     conversation_history = state.get("conversation_history")
@@ -304,10 +367,19 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     if not valid_sources:
         return {"errors": ["synthesize_answer: No valid sources found"]}
 
-    synthesis_sources = valid_sources[:6]
+    if mode == "report":
+        synthesis_sources = valid_sources
+    else:
+        synthesis_sources = valid_sources[:6]
+
     allowed_urls = {source["url"] for source in synthesis_sources}
 
-    prompt = _build_synthesis_prompt(question, synthesis_sources, conversation_history)
+    if mode == "report":
+        prompt = _build_report_prompt(question, synthesis_sources)
+    else:
+        prompt = _build_synthesis_prompt(
+            question, synthesis_sources, conversation_history
+        )
 
     try:
         response = llm_provider.generate_json(prompt)
@@ -320,8 +392,9 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     except ValueError as e:
         return {"errors": [str(e)]}
 
+    max_citations = 5 if mode == "report" else 3
     return {
         "answer": answer.strip(),
-        "citations": cleaned_citations[:3],
+        "citations": cleaned_citations[:max_citations],
         "status": "synthesized",
     }

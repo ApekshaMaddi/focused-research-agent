@@ -16,3 +16,4 @@ class ResearchState(TypedDict):
     debug: dict | None
     conversation_id: str | None
     conversation_history: list[dict] | None
+    mode: str
