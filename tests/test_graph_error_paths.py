@@ -1,19 +1,3 @@
-"""
-Focused graph-level tests for error routing behavior.
-
-What is tested:
-- the graph routes to the error handler when the initial question is empty
-
-How it is tested:
-- patch the LLM factory with a fake provider
-- reload graph.py so the compiled graph captures patched dependencies
-- invoke the graph and assert final error status and message
-
-Why it matters:
-- verifies the Option B state-based error routing design
-- proves that graph routing changes correctly when errors are present
-"""
-
 import importlib
 from focused_research_agent.state import ResearchState
 
@@ -32,6 +16,9 @@ def make_initial_state(question: str) -> ResearchState:
         "status": "started",
         "errors": [],
         "debug": None,
+        "conversation_id": None,
+        "conversation_history": None,
+        "mode": "research",
     }
 
 
@@ -44,15 +31,28 @@ class FakeLLMProvider:
         }
 
 
+class FakeSearchProvider:
+    def search(self, queries: list[str]) -> list[dict]:
+        return []
+
+
 def fake_get_llm_provider():
     return FakeLLMProvider()
 
 
+def fake_get_search_provider(search_depth: str | None = None):
+    return FakeSearchProvider()
+
+
 def test_graph_empty_question_routes_to_handle_error(monkeypatch):
     import focused_research_agent.services.llm_factory as llm_factory
+    import focused_research_agent.services.search_factory as search_factory_module
     import focused_research_agent.graph as graph_module
 
     monkeypatch.setattr(llm_factory, "get_llm_provider", fake_get_llm_provider)
+    monkeypatch.setattr(
+        search_factory_module, "get_search_provider", fake_get_search_provider
+    )
 
     graph_module = importlib.reload(graph_module)
 
