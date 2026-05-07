@@ -32,6 +32,10 @@ def make_initial_state(question: str) -> ResearchState:
         "status": "started",
         "errors": [],
         "debug": None,
+        "conversation_id": None,
+        "conversation_history": None,
+        "mode": "research",
+        "images": None,
     }
 
 
@@ -83,31 +87,33 @@ class FakeLLMProvider:
 
 
 class FakeSearchProvider:
-    def search(self, queries: list[str]) -> list[dict]:
-        return [
-            {
-                "title": "Overview of the test topic",
-                "url": "https://example.com/overview",
-                "snippet": "A high-level overview of the test topic.",
-                "source": "mock",
-                "score": 0.95,
-            },
-            {
-                "title": "Rules and requirements",
-                "url": "https://example.com/rules",
-                "snippet": "Important rules and requirements for the test topic.",
-                "source": "mock",
-                "score": 0.91,
-            },
-            {
-                "title": "Common pitfalls and examples",
-                "url": "https://example.com/pitfalls",
-                "snippet": "Examples and common pitfalls for the test topic.",
-                "source": "mock",
-                "score": 0.89,
-            },
-        ]
-
+    def search(self, queries: list[str]) -> tuple[list[dict], list[str]]:
+        return (
+            [
+                {
+                    "title": "Overview of the test topic",
+                    "url": "https://example.com/overview",
+                    "snippet": "A high-level overview of the test topic.",
+                    "source": "mock",
+                    "score": 0.95,
+                },
+                {
+                    "title": "Rules and requirements",
+                    "url": "https://example.com/rules",
+                    "snippet": "Important rules and requirements for the test topic.",
+                    "source": "mock",
+                    "score": 0.91,
+                },
+                {
+                    "title": "Common pitfalls and examples",
+                    "url": "https://example.com/pitfalls",
+                    "snippet": "Examples and common pitfalls for the test topic.",
+                    "source": "mock",
+                    "score": 0.89,
+                },
+            ],
+            [],    # ← empty images list
+        )
 
 def fake_get_llm_provider():
     return FakeLLMProvider()

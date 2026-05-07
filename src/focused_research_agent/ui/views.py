@@ -101,18 +101,39 @@ def render_research_details(data: dict) -> None:
         st.caption(f"Run ID: {data['run_id']}")
     st.divider()
 
-
-def render_sources(sources: list[dict]) -> None:
+def _extract_image_urls(sources: list[dict]) -> list[str]:
     """
-    Render the list of research sources as collapsible expanders.
+    Extract image URLs from a list of source dicts.
 
-    Displays each source in its own expander showing the title, URL,
-    and snippet. Each expander is collapsed by default. Renders an info
-    message if no sources are available.
+    Scans source URLs for known image file extensions and returns
+    any that match. Used to render a visual images section below
+    the research answer.
 
     Args:
-        sources: List of source dicts returned by the backend. Each dict
-            contains title, url, snippet, source, and score keys.
+        sources: List of source dicts from the backend response.
+
+    Returns:
+        list[str]: List of image URLs found in the sources.
+            Empty list if no image URLs are found.
+    """
+    image_extensions = (".jpg", ".jpeg", ".png", ".gif", ".webp")
+    image_urls = []
+
+    for source in sources:
+        url = source.get("url", "").lower()
+        if url.endswith(image_extensions):
+            image_urls.append(source["url"])
+
+    return image_urls
+
+def render_sources(sources: list[dict], images: list[str] | None = None) -> None:
+    """
+    Render the list of research sources as collapsible expanders.
+    Renders image URLs above the sources when available.
+
+    Args:
+        sources: List of source dicts returned by the backend.
+        images: Optional list of image URLs from the search results.
 
     Returns:
         None
@@ -120,11 +141,22 @@ def render_sources(sources: list[dict]) -> None:
     st.subheader("📚 Sources")
     if not sources:
         st.info("No sources available.")
-    else:
-        for source in sources:
-            with st.expander(source["title"]):
-                st.write(source["url"])
-                st.caption(source["snippet"])
+        return
+
+    if images:
+        st.subheader("🖼️ Images")
+        cols = st.columns(min(len(images), 3))
+        for index, url in enumerate(images):
+            with cols[index % 3]:
+                try:
+                    st.image(url, use_container_width=True)
+                except Exception:
+                    pass
+
+    for source in sources:
+        with st.expander(source["title"]):
+            st.write(source["url"])
+            st.caption(source["snippet"])
 
 
 def render_metrics(data: dict) -> None:
@@ -169,3 +201,4 @@ def render_metrics(data: dict) -> None:
         st.metric("✅ Citations", citations_count)
 
     st.divider()
+

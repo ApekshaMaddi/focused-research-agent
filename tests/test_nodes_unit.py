@@ -41,6 +41,10 @@ def make_initial_state(question: str) -> ResearchState:
         "status": "started",
         "errors": [],
         "debug": None,
+        "conversation_id": None,
+        "conversation_history": None,
+        "mode": "research",   # ← fixed: was str (the type), should be "research" (the value)
+        "images": None,
     }
 
 
@@ -99,23 +103,27 @@ class FakeBadCitationLLMProvider:
 
 
 class FakeSearchProvider:
-    def search(self, queries: list[str]) -> list[dict]:
-        return [
-            {
-                "title": "Overview of the test topic",
-                "url": "https://example.com/overview",
-                "snippet": "A high-level overview of the test topic.",
-                "source": "mock",
-                "score": 0.95,
-            },
-            {
-                "title": "Rules and requirements",
-                "url": "https://example.com/rules",
-                "snippet": "Important rules and requirements for the test topic.",
-                "source": "mock",
-                "score": 0.91,
-            },
-        ]
+    def search(self, queries: list[str]) -> tuple[list[dict], list[str]]:
+        # ← fixed: returns tuple (sources, images)
+        return (
+            [
+                {
+                    "title": "Overview of the test topic",
+                    "url": "https://example.com/overview",
+                    "snippet": "A high-level overview of the test topic.",
+                    "source": "mock",
+                    "score": 0.95,
+                },
+                {
+                    "title": "Rules and requirements",
+                    "url": "https://example.com/rules",
+                    "snippet": "Important rules and requirements for the test topic.",
+                    "source": "mock",
+                    "score": 0.91,
+                },
+            ],
+            [],
+        )
 
 
 def fake_get_search_provider():
@@ -190,8 +198,8 @@ def test_search_web_returns_error_when_queries_missing():
     state["queries"] = None
 
     class FakeSearchProvider:
-        def search(self, queries):
-            return []
+        def search(self, queries) -> tuple:
+            return ([], [])  # ← fixed: returns tuple
 
     result = search_web(state, FakeSearchProvider())
 
@@ -200,21 +208,25 @@ def test_search_web_returns_error_when_queries_missing():
 
 def test_search_web_success_returns_sources(monkeypatch):
     class FakeSearchProvider:
-        def search(self, queries):
-            return [
-                {
-                    "title": "Test Source",
-                    "url": "https://example.com",
-                    "snippet": "Test snippet.",
-                    "source": "mock",
-                    "score": 0.9,
-                }
-            ]
+        def search(self, queries) -> tuple:
+            # ← fixed: returns tuple (sources, images)
+            return (
+                [
+                    {
+                        "title": "Test Source",
+                        "url": "https://example.com",
+                        "snippet": "Test snippet.",
+                        "source": "mock",
+                        "score": 0.9,
+                    }
+                ],
+                [],
+            )
 
     state = make_initial_state("test question")
     state["queries"] = ["test query one", "test query two", "test query three"]
 
-    result = search_web(state, FakeSearchProvider())  # ← pass provider directly
+    result = search_web(state, FakeSearchProvider())
     assert "sources" in result
     assert len(result["sources"]) == 1
 
@@ -382,6 +394,7 @@ def test_synthesize_answer_with_no_conversation_history_excludes_context(
     assert len(captured_prompts) == 1
     assert "CONVERSATION HISTORY" not in captured_prompts[0]
 
+
 def test_synthesize_answer_report_mode_includes_report_sections_in_prompt():
     """
     Verify that synthesize_answer uses the report prompt when
@@ -419,6 +432,7 @@ def test_synthesize_answer_report_mode_includes_report_sections_in_prompt():
     assert "## Analysis" in captured_prompts[0]
     assert "## Conclusion" in captured_prompts[0]
 
+
 def test_synthesize_answer_research_mode_excludes_report_sections_from_prompt():
     """
     Verify that synthesize_answer does not include report section
@@ -453,5 +467,3 @@ def test_synthesize_answer_research_mode_excludes_report_sections_from_prompt():
     assert len(captured_prompts) == 1
     assert "## Introduction" not in captured_prompts[0]
     assert "## Key Findings" not in captured_prompts[0]
-
-

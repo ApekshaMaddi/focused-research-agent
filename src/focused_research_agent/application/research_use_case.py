@@ -70,6 +70,7 @@ def normalize_state(final_state: ResearchState, user_query: str) -> dict:
         "answer": final_state.get("answer"),
         "citations": None,
         "errors": [],
+        "images": final_state.get("images"),
     }
 
     queries = final_state.get("queries")
@@ -117,7 +118,8 @@ def make_initial_state(question: str) -> ResearchState:
         "debug": None,
         "conversation_id": None,
         "conversation_history": None,
-        "mode": str,
+        "mode": "research",
+        "images": None,
     }
 
     return initial_state

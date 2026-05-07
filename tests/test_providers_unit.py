@@ -38,14 +38,12 @@ class FakeTavilyClient:
         self._responses = responses
         self.calls = []
 
-    def search(self, query: str, search_depth: str, max_results: int):
-        self.calls.append(
-            {
-                "query": query,
-                "search_depth": search_depth,
-                "max_results": max_results,
-            }
-        )
+    def search(self, query: str, search_depth: str, max_results: int, include_images: bool = False):
+        self.calls.append({
+            "query": query,
+            "search_depth": search_depth,
+            "max_results": max_results,
+        })
         return self._responses.pop(0)
 
 
@@ -199,7 +197,8 @@ def test_tavily_search_deduplicates_urls(monkeypatch):
                     "content": "Duplicate snippet",
                     "score": 0.90,
                 },
-            ]
+            ],
+            "images": [],
         },
         {
             "results": [
@@ -209,12 +208,12 @@ def test_tavily_search_deduplicates_urls(monkeypatch):
                     "content": "Snippet B",
                     "score": 0.85,
                 }
-            ]
+            ],
+            "images": [],
         },
     ]
 
     fake_client = FakeTavilyClient(responses)
-
     monkeypatch.setattr(search_provider_module, "get_search_config", fake_search_config)
     monkeypatch.setattr(
         search_provider_module,
@@ -223,12 +222,13 @@ def test_tavily_search_deduplicates_urls(monkeypatch):
     )
 
     provider = TavilySearchClient()
-    result = provider.search(["query one", "query two"])
+    sources, images = provider.search(["query one", "query two"])  # ← unpack tuple
 
-    assert len(result) == 2
-    assert result[0]["url"] == "https://example.com/a"
-    assert result[1]["url"] == "https://example.com/b"
-    assert result[0]["source"] == "tavily"
+    assert len(sources) == 2
+    assert sources[0]["url"] == "https://example.com/a"
+    assert sources[1]["url"] == "https://example.com/b"
+    assert sources[0]["source"] == "tavily"
+    assert images == []
 
 
 def test_tavily_search_raises_on_invalid_response_shape(monkeypatch):

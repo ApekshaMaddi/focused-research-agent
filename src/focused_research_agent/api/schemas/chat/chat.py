@@ -76,3 +76,4 @@ class ChatResponse(BaseModel):
     errors: list[str]
     conversation_id: str
     turn_number: int
+    images: list[str] | None
