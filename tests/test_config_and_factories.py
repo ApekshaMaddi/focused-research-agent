@@ -219,3 +219,14 @@ def test_get_search_provider_raises_for_unsupported_provider(monkeypatch):
 
     with pytest.raises(ValueError, match="Unsupported search provider"):
         search_factory_module.get_search_provider()
+
+def test_get_llm_config_raises_when_max_tokens_invalid(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "groq")
+    monkeypatch.setenv("LLM_MODEL", "llama-test")
+    monkeypatch.setenv("LLM_TEMPERATURE", "0.0")
+    monkeypatch.setenv("LLM_MAX_RETRIES", "2")
+    monkeypatch.setenv("LLM_API_KEY", "fake-key")
+    monkeypatch.setenv("LLM_MAX_TOKENS", "not-an-int")
+
+    with pytest.raises(ValueError, match="LLM_MAX_TOKENS must be an int"):
+        llm_config_module.get_llm_config()

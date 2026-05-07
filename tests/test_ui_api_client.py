@@ -351,3 +351,27 @@ def test_get_conversation_returns_empty_list_on_connect_error(monkeypatch):
     from focused_research_agent.ui.api_client import get_conversation
     result = get_conversation("conv-1")
     assert result == []
+
+def test_get_reports_returns_list_on_200(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def get(self, url, timeout):
+            return FakeResponse(200, [{"conversation_id": "rep-1", "title": "Report on AI"}])
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import get_reports
+    result = get_reports()
+    assert len(result) == 1
+    assert result[0]["conversation_id"] == "rep-1"
+
+
+def test_get_reports_returns_empty_list_on_connect_error(monkeypatch):
+    class FakeHttpx:
+        ConnectError = httpx.ConnectError
+        TimeoutException = httpx.TimeoutException
+        def get(self, url, timeout):
+            raise httpx.ConnectError("refused")
+    monkeypatch.setattr(api_client_module, "httpx", FakeHttpx())
+    from focused_research_agent.ui.api_client import get_reports
+    result = get_reports()
+    assert result == []

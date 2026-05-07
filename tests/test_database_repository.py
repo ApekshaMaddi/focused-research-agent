@@ -447,3 +447,35 @@ def test_get_conversation_turns_returns_correct_fields(db, sample_state):
     assert result[0]["status"] == "completed"
     assert result[0]["answer"] == "Quantum computing uses quantum mechanical phenomena."
     assert "created_at" in result[0]
+
+def test_save_run_stores_mode_field(db, sample_state):
+    result = save_run(
+        db, sample_state, conversation_id="conv-abc",
+        turn_number=1, mode="report"
+    )
+    assert result.mode == "report"
+
+
+def test_get_all_reports_returns_empty_list_when_no_data(db):
+    from focused_research_agent.database.repository import get_all_reports
+    result = get_all_reports(db)
+    assert result == []
+
+
+def test_get_all_reports_returns_only_report_mode_runs(db, sample_state):
+    from focused_research_agent.database.repository import get_all_reports
+    save_run(db, sample_state, conversation_id="conv-chat", turn_number=1, mode="research")
+    save_run(db, sample_state, conversation_id="conv-report", turn_number=1, mode="report")
+    result = get_all_reports(db)
+    assert len(result) == 1
+    assert result[0]["conversation_id"] == "conv-report"
+
+
+def test_get_all_reports_returns_correct_fields(db, sample_state):
+    from focused_research_agent.database.repository import get_all_reports
+    save_run(db, sample_state, conversation_id="conv-report", turn_number=1, mode="report")
+    result = get_all_reports(db)
+    assert result[0]["conversation_id"] == "conv-report"
+    assert result[0]["title"] == "What is quantum computing?"
+    assert "created_at" in result[0]
+

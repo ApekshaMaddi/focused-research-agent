@@ -78,7 +78,51 @@ def _render_report_input() -> str | None:
     return None
 
 
+def _render_report_success(data: dict) -> None:
+    """
+    Render the successful report content.
+
+    Args:
+        data: The full report response dict from the backend.
+
+    Returns:
+        None
+    """
+    st.success("✅ Report complete!")
+    st.divider()
+    st.markdown(data["answer"])
+    st.divider()
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("📋 Queries", len(data.get("queries") or []))
+    with col2:
+        st.metric("🔗 Sources", len(data.get("sources") or []))
+    with col3:
+        st.metric("✅ Citations", len(data.get("citations") or []))
+
+    st.divider()
+
+    if data.get("sources"):
+        st.subheader("📚 Sources")
+        for source in data["sources"]:
+            with st.expander(source["title"]):
+                st.write(source["url"])
+                st.caption(source["snippet"])
+
+    st.divider()
+
+    if st.checkbox("🛠️ Show raw response"):
+        st.json(data)
+
+
 def _render_report_result() -> None:
+    """
+    Render the most recent report result from session state.
+
+    Returns:
+        None
+    """
     if st.session_state.report_result is None:
         return
 
@@ -93,41 +137,7 @@ def _render_report_result() -> None:
         return
 
     if result["success"]:
-        st.success("✅ Report complete!")
-        st.divider()
-
-        # Render the structured markdown report
-        st.markdown(data["answer"])
-
-        st.divider()
-
-        # Metrics row
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            queries = data.get("queries") or []
-            st.metric("📋 Queries", len(queries))
-        with col2:
-            sources = data.get("sources") or []
-            st.metric("🔗 Sources", len(sources))
-        with col3:
-            citations = data.get("citations") or []
-            st.metric("✅ Citations", len(citations))
-
-        st.divider()
-
-        # Sources
-        if data.get("sources"):
-            st.subheader("📚 Sources")
-            for source in data["sources"]:
-                with st.expander(source["title"]):
-                    st.write(source["url"])
-                    st.caption(source["snippet"])
-
-        st.divider()
-
-        # Debug panel
-        if st.checkbox("🛠️ Show raw response"):
-            st.json(result)
+        _render_report_success(data)
     else:
         st.error(result["error"] or "An error occurred.")
 
