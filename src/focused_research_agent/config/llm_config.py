@@ -15,6 +15,13 @@ def get_llm_config():
         ValueError: If a required environment variable is missing or
         if temperature or max_retries cannot be parsed correctly.
     """
+    max_tokens_raw = os.getenv("LLM_MAX_TOKENS", "4096")
+
+    try:
+        max_tokens = int(max_tokens_raw)
+    except ValueError:
+        raise ValueError(f"LLM_MAX_TOKENS must be an int. Got: {max_tokens_raw}")
+
     provider = os.getenv("LLM_PROVIDER")
     model = os.getenv("LLM_MODEL")
     temp_raw = os.getenv("LLM_TEMPERATURE")
@@ -48,4 +55,5 @@ def get_llm_config():
         "temperature": temperature,
         "max_retries": max_retries,
         "api_key": api_key,
+        "max_tokens": max_tokens,
     }

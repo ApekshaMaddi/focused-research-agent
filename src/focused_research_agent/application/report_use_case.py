@@ -77,7 +77,7 @@ def execute_report(question: str, db: Session) -> dict:
 
     try:
         conversation_id = str(uuid.uuid4())
-        save_run(db, result, conversation_id, turn_number=1)
+        save_run(db, result, conversation_id, turn_number=1, mode="report")
     except SQLAlchemyError:
         logger.exception("Failed to save report run to database")
 

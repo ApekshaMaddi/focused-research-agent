@@ -56,6 +56,7 @@ def fake_llm_config():
         "temperature": 0.0,
         "max_retries": 2,
         "api_key": "fake-key",
+        "max_tokens": 4096,
     }
 
 
