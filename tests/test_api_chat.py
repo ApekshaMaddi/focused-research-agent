@@ -126,6 +126,7 @@ def fake_success_chat_turn(
         "errors": [],
         "conversation_id": conversation_id or "conv-new-123",
         "turn_number": 1,
+        "images": None,
     }
 
 
@@ -147,6 +148,7 @@ def fake_error_chat_turn(
         "errors": ["search_web: Tavily request failed"],
         "conversation_id": conversation_id or "conv-error-123",
         "turn_number": 1,
+        "images": None,
     }
 
 

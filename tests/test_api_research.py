@@ -59,6 +59,7 @@ def fake_success_research_question(question: str) -> dict:
             "https://example.com/frameworks",
         ],
         "errors": [],
+        "images": None,
     }
 
 
@@ -82,6 +83,7 @@ def fake_error_research_question(question: str) -> dict:
         "answer": None,
         "citations": None,
         "errors": ["search_web: Tavily request failed"],
+        "images": None,
     }
 
 

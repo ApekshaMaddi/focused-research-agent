@@ -63,6 +63,7 @@ def fake_success_report(question: str, db) -> dict:
             "https://example.com/source2",
         ],
         "errors": [],
+        "images": None,
     }
 
 
@@ -78,6 +79,7 @@ def fake_error_report(question: str, db) -> dict:
         "answer": None,
         "citations": None,
         "errors": ["search_web: Tavily request failed"],
+        "images": None,
     }
 
 
