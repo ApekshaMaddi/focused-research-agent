@@ -279,3 +279,30 @@ def get_conversation(conversation_id: str) -> list[dict]:
 
     except httpx.TimeoutException:
         return []
+
+def get_reports() -> list[dict]:
+    """
+    Fetch the list of all past report runs from the backend.
+
+    Returns an empty list on any error so sidebar failures never
+    block the report UI.
+
+    Returns:
+        list[dict]: List of report summary dicts containing
+            conversation_id, title, and created_at keys.
+            Empty list if the request fails for any reason.
+    """
+    settings = get_ui_settings()
+    try:
+        response = httpx.get(
+            f"{settings.api_base_url}{_REPORT_ENDPOINT}",
+            timeout=settings.request_timeout,
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return []
+    except httpx.ConnectError:
+        return []
+    except httpx.TimeoutException:
+        return []

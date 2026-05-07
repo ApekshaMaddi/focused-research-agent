@@ -58,6 +58,7 @@ def save_run(
     state: dict,
     conversation_id: str,
     turn_number: int,
+    mode: str = "research",
 ) -> ConversationRun:
     """
     Save a completed research run to the database.
@@ -101,6 +102,7 @@ def save_run(
         errors=_serialize(state.get("errors")),
         created_at=now,
         updated_at=now,
+        mode=mode
     )
 
     db.add(run)
@@ -238,3 +240,36 @@ def get_conversation_turns(
         )
 
     return turns
+
+def get_all_reports(db: Session) -> list[dict]:
+    """
+    Fetch a summary list of all report runs for the report history
+    sidebar.
+
+    Returns one entry per report ordered newest first. Filters by
+    mode='report' to exclude chat and research runs.
+
+    Args:
+        db: Active SQLAlchemy database session.
+
+    Returns:
+        list[dict]: List of report summary dicts containing
+            conversation_id, title, and created_at keys.
+            Empty list if no reports exist yet.
+    """
+    runs = (
+        db.query(ConversationRun)
+        .filter(ConversationRun.mode == "report")
+        .order_by(ConversationRun.created_at.desc())
+        .all()
+    )
+
+    reports = []
+    for run in runs:
+        reports.append({
+            "conversation_id": run.conversation_id,
+            "title": run.conversation_title,
+            "created_at": run.created_at.isoformat(),
+        })
+
+    return reports

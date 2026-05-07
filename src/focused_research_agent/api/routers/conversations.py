@@ -63,3 +63,23 @@ def get_conversation(
             Empty list if the conversation does not exist.
     """
     return get_conversation_turns(db, conversation_id)
+
+
+@conversations_router.get(
+    "/reports",
+    status_code=status.HTTP_200_OK,
+)
+def get_reports(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
+    """
+    Return a summary list of all report runs for the report history
+    sidebar.
+
+    Args:
+        db: Injected SQLAlchemy database session.
+
+    Returns:
+        list[dict]: List of report summary dicts containing
+            conversation_id, title, and created_at keys.
+    """
+    from focused_research_agent.database.repository import get_all_reports
+    return get_all_reports(db)
