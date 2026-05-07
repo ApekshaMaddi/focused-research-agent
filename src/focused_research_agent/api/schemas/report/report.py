@@ -67,3 +67,4 @@ class ReportResponse(BaseModel):
     answer: str | None
     citations: list[str] | None
     errors: list[str]
+    images: list[str] | None

@@ -16,14 +16,15 @@ class SearchProvider(ABC):
     """Abstract contract for search providers used by the research agent."""
 
     @abstractmethod
-    def search(self, queries: list[str]) -> list[SearchResult]: ...
+    def search(self, queries: list[str]) -> tuple[list[SearchResult], list[str]]:
+        """Run web searches and return normalized results.
 
-    """Run web searches and return normalized results.
+        Args:
+            queries: A list of search queries to execute.
 
-    Args:
-    queries: A list of search queries to execute.
-
-    Returns:
-    list[SearchResult]: Normalized search results collected
-    from the provider.
-    """
+        Returns:
+            tuple: A tuple containing:
+                - list[SearchResult]: Normalized search results
+                - list[str]: Image URLs found during search
+        """
+        ...

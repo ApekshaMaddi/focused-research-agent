@@ -100,9 +100,10 @@ def save_run(
         answer=state.get("answer"),
         citations=_serialize(state.get("citations")),
         errors=_serialize(state.get("errors")),
+        images=_serialize(state.get("images")),
         created_at=now,
         updated_at=now,
-        mode=mode
+        mode=mode,
     )
 
     db.add(run)
@@ -236,6 +237,7 @@ def get_conversation_turns(
                 "citations": _deserialize(run.citations),
                 "errors": _deserialize(run.errors),
                 "created_at": run.created_at.isoformat(),
+                "images": _deserialize(run.images),
             }
         )
 

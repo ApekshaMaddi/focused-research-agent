@@ -38,14 +38,12 @@ class FakeTavilyClient:
         self._responses = responses
         self.calls = []
 
-    def search(self, query: str, search_depth: str, max_results: int):
-        self.calls.append(
-            {
-                "query": query,
-                "search_depth": search_depth,
-                "max_results": max_results,
-            }
-        )
+    def search(self, query: str, search_depth: str, max_results: int, include_images: bool = False):
+        self.calls.append({
+            "query": query,
+            "search_depth": search_depth,
+            "max_results": max_results,
+        })
         return self._responses.pop(0)
 
 
@@ -199,7 +197,8 @@ def test_tavily_search_deduplicates_urls(monkeypatch):
                     "content": "Duplicate snippet",
                     "score": 0.90,
                 },
-            ]
+            ],
+            "images": [],
         },
         {
             "results": [
@@ -209,12 +208,12 @@ def test_tavily_search_deduplicates_urls(monkeypatch):
                     "content": "Snippet B",
                     "score": 0.85,
                 }
-            ]
+            ],
+            "images": [],
         },
     ]
 
     fake_client = FakeTavilyClient(responses)
-
     monkeypatch.setattr(search_provider_module, "get_search_config", fake_search_config)
     monkeypatch.setattr(
         search_provider_module,
@@ -223,12 +222,13 @@ def test_tavily_search_deduplicates_urls(monkeypatch):
     )
 
     provider = TavilySearchClient()
-    result = provider.search(["query one", "query two"])
+    sources, images = provider.search(["query one", "query two"])  # ← unpack tuple
 
-    assert len(result) == 2
-    assert result[0]["url"] == "https://example.com/a"
-    assert result[1]["url"] == "https://example.com/b"
-    assert result[0]["source"] == "tavily"
+    assert len(sources) == 2
+    assert sources[0]["url"] == "https://example.com/a"
+    assert sources[1]["url"] == "https://example.com/b"
+    assert sources[0]["source"] == "tavily"
+    assert images == []
 
 
 def test_tavily_search_raises_on_invalid_response_shape(monkeypatch):
@@ -287,3 +287,123 @@ def test_tavily_client_overrides_search_depth_when_provided(monkeypatch):
     )
     client = TavilySearchClient(search_depth="advanced")
     assert client.search_config["search_depth"] == "advanced"
+
+import focused_research_agent.services.llm_provider_ollama as ollama_provider_module
+from focused_research_agent.services.llm_provider_ollama import OllamaLLMProvider
+
+
+def fake_ollama_llm_config():
+    return {
+        "provider": "ollama",
+        "model": "gpt-oss:20b-cloud",
+        "temperature": 0.0,
+        "max_retries": 2,
+        "api_key": "fake-ollama-key",
+        "max_tokens": 2048,
+    }
+
+
+def build_fake_ollama_client_class(content: str):
+    """Return a fake Client class that returns controlled content."""
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        def chat(self, model: str, messages: list):
+            return SimpleNamespace(
+                message=SimpleNamespace(content=content)
+            )
+
+    return _FakeClient
+
+
+def test_ollama_generate_json_rejects_empty_prompt(monkeypatch):
+    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module, "Client", build_fake_ollama_client_class('{"ok": true}')
+    )
+
+    provider = OllamaLLMProvider()
+
+    with pytest.raises(ValueError, match="OllamaLLMProvider: No prompt provided!"):
+        provider.generate_json("   ")
+
+
+def test_ollama_generate_json_parses_valid_json(monkeypatch):
+    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module, "Client", build_fake_ollama_client_class('{"answer": "ok"}')
+    )
+
+    provider = OllamaLLMProvider()
+    result = provider.generate_json("test prompt")
+
+    assert result == {"answer": "ok"}
+
+
+def test_ollama_generate_json_parses_fenced_json(monkeypatch):
+    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module,
+        "Client",
+        build_fake_ollama_client_class('```json\n{"answer": "ok"}\n```'),
+    )
+
+    provider = OllamaLLMProvider()
+    result = provider.generate_json("test prompt")
+
+    assert result == {"answer": "ok"}
+
+
+def test_ollama_generate_json_parses_json_from_surrounding_text(monkeypatch):
+    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module,
+        "Client",
+        build_fake_ollama_client_class('Here is the result: {"answer": "ok"} Thanks!'),
+    )
+
+    provider = OllamaLLMProvider()
+    result = provider.generate_json("test prompt")
+
+    assert result == {"answer": "ok"}
+
+
+def test_ollama_generate_json_raises_when_no_json_found(monkeypatch):
+    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module,
+        "Client",
+        build_fake_ollama_client_class("plain text without any json structure"),
+    )
+
+    provider = OllamaLLMProvider()
+
+    with pytest.raises(ValueError, match="LLM did not return JSON"):
+        provider.generate_json("test prompt")
+
+
+def test_ollama_uses_cloud_client_when_api_key_provided(monkeypatch):
+    """
+    Verify that OllamaLLMProvider passes host and Authorization header
+    when an API key is present in the config.
+    """
+    captured_kwargs = {}
+
+    class FakeCloudClient:
+        def __init__(self, **kwargs):
+            captured_kwargs.update(kwargs)
+
+        def chat(self, model: str, messages: list):
+            return SimpleNamespace(
+                message=SimpleNamespace(content='{"ok": true}')
+            )
+
+    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(ollama_provider_module, "Client", FakeCloudClient)
+
+    OllamaLLMProvider()
+
+    assert "host" in captured_kwargs
+    assert "headers" in captured_kwargs
+    assert "Authorization" in captured_kwargs["headers"]

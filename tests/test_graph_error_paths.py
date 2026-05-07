@@ -19,6 +19,7 @@ def make_initial_state(question: str) -> ResearchState:
         "conversation_id": None,
         "conversation_history": None,
         "mode": "research",
+        "images": None,
     }
 
 
@@ -32,8 +33,8 @@ class FakeLLMProvider:
 
 
 class FakeSearchProvider:
-    def search(self, queries: list[str]) -> list[dict]:
-        return []
+    def search(self, queries: list[str]) -> tuple[list[dict], list[str]]:
+        return( [],[])
 
 
 def fake_get_llm_provider():

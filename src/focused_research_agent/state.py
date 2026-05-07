@@ -17,3 +17,4 @@ class ResearchState(TypedDict):
     conversation_id: str | None
     conversation_history: list[dict] | None
     mode: str
+    images: list[str] | None

@@ -18,5 +18,12 @@ def get_llm_provider() -> LLMProvider:
     if provider == "groq":
         return GroqLLMProvider()
 
+    if provider == "ollama":
+        from focused_research_agent.services.llm_provider_ollama import (
+            OllamaLLMProvider,
+        )
+
+        return OllamaLLMProvider()
+
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")

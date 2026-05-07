@@ -107,6 +107,10 @@ def sample_state() -> dict:
         "answer": "Quantum computing uses quantum mechanical phenomena.",
         "citations": ["https://example.com/quantum"],
         "errors": [],
+        "images": [  # ← add this
+            "https://example.com/image1.jpg",
+            "https://example.com/image2.jpg",
+        ],
     }
 
 
@@ -479,3 +483,29 @@ def test_get_all_reports_returns_correct_fields(db, sample_state):
     assert result[0]["title"] == "What is quantum computing?"
     assert "created_at" in result[0]
 
+def test_save_run_stores_and_retrieves_images(db, sample_state):
+    """
+    Verify that images are serialized on save and deserialized
+    correctly when turns are retrieved.
+    """
+    save_run(db, sample_state, conversation_id="conv-img", turn_number=1)
+
+    turns = get_conversation_turns(db, "conv-img")
+
+    assert turns[0]["images"] == [
+        "https://example.com/image1.jpg",
+        "https://example.com/image2.jpg",
+    ]
+
+
+def test_save_run_handles_none_images(db, sample_state):
+    """
+    Verify that None images is handled gracefully — stored as
+    null and returned as None.
+    """
+    sample_state["images"] = None
+    save_run(db, sample_state, conversation_id="conv-no-img", turn_number=1)
+
+    turns = get_conversation_turns(db, "conv-no-img")
+
+    assert turns[0]["images"] is None

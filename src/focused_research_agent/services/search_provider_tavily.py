@@ -160,7 +160,7 @@ class TavilySearchClient(SearchProvider):
 
         return normalized_result
 
-    def _search_single_query(self, query: str) -> list[SearchResult]:
+    def _search_single_query(self, query: str) -> tuple[list[SearchResult], list[str]]:
         """Run Tavily search for one query and normalize the returned results.
 
         Args:
@@ -168,6 +168,7 @@ class TavilySearchClient(SearchProvider):
 
         Returns:
             list[SearchResult]: Normalized results for that query.
+            list[str]: List of images
 
         Raises:
             ValueError: If the Tavily response shape is invalid or a result
@@ -177,18 +178,19 @@ class TavilySearchClient(SearchProvider):
             query=query,
             search_depth=self.search_config["search_depth"],
             max_results=self.search_config["max_results"],
+            include_images=True,
         )
 
         response_results = self._validate_tavily_response(response, query)
+        images = response.get("images") or []
 
         normalized_results: list[SearchResult] = []
-
         for item in response_results:
             normalized_results.append(self._normalize_result(item, query))
 
-        return normalized_results
+        return normalized_results, images
 
-    def search(self, queries: list[str]) -> list[SearchResult]:
+    def search(self, queries: list[str]) -> tuple[list[SearchResult], list[str]]:
         """Run Tavily searches and return normalized, deduplicated results.
 
         Args:
@@ -196,24 +198,24 @@ class TavilySearchClient(SearchProvider):
 
         Returns:
             list[SearchResult]: Deduplicated and normalized search results.
+            list[str]: List of images
 
         Raises:
             ValueError: If the query list is invalid or Tavily returns an
                 unexpected response structure.
         """
         cleaned_queries = self._validate_queries(queries)
-
         final_search_results: list[SearchResult] = []
+        all_images: list[str] = []
         seen_urls: set[str] = set()
 
         for query in cleaned_queries:
-            query_results = self._search_single_query(query)
-
+            query_results, query_images = self._search_single_query(query)
             for result in query_results:
                 if result["url"] in seen_urls:
                     continue
-
                 seen_urls.add(result["url"])
                 final_search_results.append(result)
+            all_images.extend(query_images)
 
-        return final_search_results
+        return final_search_results, all_images

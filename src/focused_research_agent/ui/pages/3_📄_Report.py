@@ -88,7 +88,7 @@ def _render_report_success(data: dict) -> None:
     Returns:
         None
     """
-    st.success("✅ Report complete!")
+    st.success("✅ Report generated successfully!")
     st.divider()
     st.markdown(data["answer"])
     st.divider()
@@ -102,6 +102,18 @@ def _render_report_success(data: dict) -> None:
         st.metric("✅ Citations", len(data.get("citations") or []))
 
     st.divider()
+
+    images = data.get("images") or []
+    if images:
+        st.subheader("🖼️ Images")
+        cols = st.columns(min(len(images), 3))
+        for index, url in enumerate(images):
+            with cols[index % 3]:
+                try:
+                    st.image(url, use_container_width=True)
+                except Exception:
+                    pass
+        st.divider()
 
     if data.get("sources"):
         st.subheader("📚 Sources")
