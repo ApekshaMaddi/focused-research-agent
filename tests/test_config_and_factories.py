@@ -230,3 +230,31 @@ def test_get_llm_config_raises_when_max_tokens_invalid(monkeypatch):
 
     with pytest.raises(ValueError, match="LLM_MAX_TOKENS must be an int"):
         llm_config_module.get_llm_config()
+
+def fake_ollama_llm_config():
+    return {
+        "provider": "ollama",
+        "model": "gpt-oss:20b-cloud",
+        "temperature": 0.0,
+        "max_retries": 2,
+        "api_key": "fake-ollama-key",
+        "max_tokens": 2048,
+    }
+
+
+def test_get_llm_provider_returns_ollama_provider(monkeypatch):
+    import focused_research_agent.services.llm_provider_ollama as ollama_module
+
+    class FakeOllamaClient:
+        def __init__(self, **kwargs):
+            pass
+
+    monkeypatch.setattr(llm_factory_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(ollama_module, "Client", FakeOllamaClient)
+    monkeypatch.setattr(ollama_module, "get_llm_config", fake_ollama_llm_config)
+
+    from focused_research_agent.services.llm_provider_ollama import OllamaLLMProvider
+    result = llm_factory_module.get_llm_provider()
+
+    assert isinstance(result, OllamaLLMProvider)
+
