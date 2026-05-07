@@ -3,8 +3,13 @@ from focused_research_agent.interfaces.search_interface import SearchProvider
 from focused_research_agent.services.search_provider_tavily import TavilySearchClient
 
 
-def get_search_provider() -> SearchProvider:
+def get_search_provider(search_depth: str | None = None) -> SearchProvider:
     """Return the active search provider implementation.
+
+    Args:
+        search_depth: Optional override for search depth. When provided,
+            overrides the SEARCH_DEPTH environment variable. Accepts
+            'basic' or 'advanced'.
 
     Returns:
         SearchProvider: The configured search provider instance.
@@ -16,6 +21,6 @@ def get_search_provider() -> SearchProvider:
     provider = search_config["provider"]
 
     if provider == "tavily":
-        return TavilySearchClient()
+        return TavilySearchClient(search_depth=search_depth)
     else:
         raise ValueError(f"Unsupported search provider: {provider}")

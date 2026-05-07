@@ -15,10 +15,19 @@ logger = logging.getLogger(__name__)
 class TavilySearchClient(SearchProvider):
     """Tavily-backed implementation of the search provider contract."""
 
-    def __init__(self):
-        """Initialize the Tavily search client using validated config."""
+    def __init__(self, search_depth: str | None = None):
+        """Initialize the Tavily search client using validated config.
+
+        Args:
+            search_depth: Optional override for search depth. When provided,
+                overrides the SEARCH_DEPTH environment variable. Accepts
+                'basic' or 'advanced'.
+        """
         self.search_config = get_search_config()
         self.tavily_client = TavilyClient(api_key=self.search_config["api_key"])
+
+        if search_depth is not None:
+            self.search_config["search_depth"] = search_depth
 
     # ------------------------------------------------------------------
     # Static helpers — pure validation functions that operate only on

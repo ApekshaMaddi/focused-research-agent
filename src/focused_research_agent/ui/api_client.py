@@ -21,7 +21,9 @@ _HEALTH_ENDPOINT = "/health"
 _RESEARCH_ENDPOINT = "/api/v1/research"
 _CHAT_ENDPOINT = "/api/v1/chat"
 _CONVERSATIONS_ENDPOINT = "/api/v1/conversations"
+_REPORT_ENDPOINT = "/api/v1/report"
 
+_TIMEOUT_ERROR_MESSAGE = "Request timed out — research is taking too long."
 
 class ResearchCallResult(TypedDict):
     success: bool
@@ -125,7 +127,7 @@ def call_research(question: str) -> ResearchCallResult:
         return {
             "success": False,
             "data": None,
-            "error": "Request timed out — research is taking too long.",
+            "error": _TIMEOUT_ERROR_MESSAGE,
         }
 
 
@@ -167,7 +169,50 @@ def call_chat(question: str, conversation_id: str | None) -> ResearchCallResult:
         return {
             "success": False,
             "data": None,
-            "error": "Request timed out — research is taking too long.",
+            "error": _TIMEOUT_ERROR_MESSAGE,
+        }
+
+
+def call_report(question: str) -> ResearchCallResult:
+    """
+    Send a report generation request to the FastAPI backend and
+    return the result.
+
+    Makes a POST request to the report endpoint with the user's
+    question. Returns a ResearchCallResult with the same shape as
+    call_research, but the answer field contains a structured
+    markdown report with Introduction, Key Findings, Analysis,
+    and Conclusion sections.
+
+    Args:
+        question: The user's research question for the report.
+
+    Returns:
+        ResearchCallResult: A typed dict with success, data, and
+            error keys. On success, data contains the full report
+            response with structured markdown in the answer field.
+
+    Raises:
+        BackendUnavailableError: If the backend cannot be reached.
+    """
+
+    settings = get_ui_settings()
+    try:
+        response = httpx.post(
+            f"{settings.api_base_url}{_REPORT_ENDPOINT}",
+            json={"question": question},
+            timeout=settings.request_timeout,
+        )
+        return _parse_post_response(response)
+    except httpx.ConnectError:
+        raise BackendUnavailableError(
+            f"Cannot connect to backend at {settings.api_base_url} — is FastAPI running?"
+        )
+    except httpx.TimeoutException:
+        return {
+            "success": False,
+            "data": None,
+            "error": _TIMEOUT_ERROR_MESSAGE,
         }
 
 

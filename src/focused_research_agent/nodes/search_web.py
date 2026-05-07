@@ -1,8 +1,8 @@
-from focused_research_agent.services.search_factory import get_search_provider
+from focused_research_agent.interfaces.search_interface import SearchProvider
 from focused_research_agent.state import ResearchState
 
 
-def search_web(state: ResearchState) -> dict:
+def search_web(state: ResearchState, search_provider: SearchProvider) -> dict:
     """Search the web using the generated queries.
 
     This node retrieves the active search provider from the factory,
@@ -10,6 +10,7 @@ def search_web(state: ResearchState) -> dict:
 
     Args:
         state: The current research state.
+        search_provider: The active search provider instance.
 
     Returns:
         dict: A partial state update containing sources and status,
@@ -24,7 +25,6 @@ def search_web(state: ResearchState) -> dict:
         return {"errors": ["search_web: No queries found"]}
 
     try:
-        search_provider = get_search_provider()
         search_results = search_provider.search(queries)
     except Exception as e:
         return {"errors": [f"search_web failed: {e}"]}

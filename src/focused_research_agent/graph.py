@@ -1,5 +1,7 @@
 # builds & compiles the StateGraph
 from langgraph.graph import StateGraph, START, END
+
+
 from focused_research_agent.state import ResearchState
 from focused_research_agent.nodes.init_run import initialize_state
 from focused_research_agent.nodes.scope_question import scope_question
@@ -9,6 +11,7 @@ from focused_research_agent.nodes.synthesize_answer import synthesize_answer
 from focused_research_agent.nodes.finalize_run import finalize_run
 from focused_research_agent.services.llm_factory import get_llm_provider
 from focused_research_agent.nodes.handle_error import handle_error
+from focused_research_agent.services.search_factory import get_search_provider
 
 
 def route_after_node(state: ResearchState) -> str:
@@ -21,14 +24,16 @@ def route_after_node(state: ResearchState) -> str:
     return "continue"
 
 
-def build_graph():
+def build_graph(search_depth: str | None = None):
     """Build and compile the LangGraph workflow for the research agent.
 
-    The graph creates the shared LLM provider once, injects it into the
-    LLM-dependent nodes through closures, and uses conditional routing
-    to send error states to the terminal error handler.
+    Args:
+        search_depth: Optional override for search depth. When provided,
+            overrides the SEARCH_DEPTH environment variable. Accepts
+            'basic' or 'advanced'. Defaults to the configured value.
     """
     llm = get_llm_provider()
+    search = get_search_provider(search_depth=search_depth)
 
     def _scope_question(state):
         return scope_question(state, llm)
@@ -39,11 +44,14 @@ def build_graph():
     def _synthesize_answer(state):
         return synthesize_answer(state, llm)
 
+    def _search_web(state):
+        return search_web(state, search)
+
     builder = StateGraph(ResearchState)
     builder.add_node("init_run", initialize_state)
     builder.add_node("scope_question", _scope_question)
     builder.add_node("generate_queries", _generate_queries)
-    builder.add_node("search_web", search_web)
+    builder.add_node("search_web", _search_web)
     builder.add_node("synthesize_answer", _synthesize_answer)
     builder.add_node("finalize_run", finalize_run)
     builder.add_node("handle_error", handle_error)

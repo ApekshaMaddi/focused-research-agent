@@ -30,6 +30,7 @@ omit = [
     "src/focused_research_agent/ui/Home.py",
     "src/focused_research_agent/ui/pages/1_🔍_Research.py",
     "src/focused_research_agent/ui/pages/2_💬_Chat.py",
+    "src/focused_research_agent/ui/pages/3_📄_Report.py",
 ]
 
 [build-system]
