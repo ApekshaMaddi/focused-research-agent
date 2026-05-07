@@ -22,6 +22,7 @@ class GroqLLMProvider(LLMProvider):
             temperature=self.llm_config["temperature"],
             max_retries=self.llm_config["max_retries"],
             api_key=self.llm_config["api_key"],
+            max_tokens=self.llm_config["max_tokens"],
         )
 
     # ------------------------------------------------------------------

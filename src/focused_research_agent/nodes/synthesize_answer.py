@@ -4,6 +4,8 @@ from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
 
 INVALID_LLM_RESPONSE_ERROR_MESSAGE = "Invalid response obtained from LLM"
+_REPORT_MAX_SOURCES = 15
+_RESEARCH_MAX_SOURCES = 6
 
 # This is a lightweight heuristic for ranking, not a full trust system
 _DOMAIN_BONUSES = {
@@ -244,12 +246,21 @@ def _build_report_prompt(question: str, sources: list[dict]) -> str:
     - citations (list of 3 to 5 URLs)
 
     Rules:
-    - Write each section with 2-4 paragraphs of substantive content
-    - Use all provided sources to build a comprehensive report
+    - Write EXACTLY 3 substantial paragraphs per section
+    - Each paragraph must be at least 4 sentences long
+    - NEVER repeat the same sentence or idea across different sections
+    - Each section must contain DIFFERENT information:
+        * Introduction: background and context only
+        * Key Findings: specific discoveries and data points only
+        * Analysis: implications, comparisons, and critical examination only
+        * Conclusion: summary of significance and future outlook only
+    - Be comprehensive and detailed
+    - Use all provided sources
     - Every claim must be supported by the sources
     - Do NOT invent facts or citations
     - Every citation URL must match a provided source URL exactly
     - Do NOT mention "sources", "snippets", or "citations" inside the answer
+
 
     Example JSON output:
     {{
@@ -295,6 +306,10 @@ def _validate_synthesis_response(response: object) -> tuple[str, list]:
         raise ValueError(INVALID_LLM_RESPONSE_ERROR_MESSAGE)
     return (answer, citations)
 
+def _normalize_url(url: str) -> str:
+    """Normalize a URL for comparison by stripping trailing slashes."""
+    return url.strip().rstrip("/").lower()
+
 
 def _clean_citations(citations: list, allowed_urls: set[str]) -> list[str]:
     """Validate, deduplicate, and filter returned citations.
@@ -310,8 +325,13 @@ def _clean_citations(citations: list, allowed_urls: set[str]) -> list[str]:
         ValueError: If citations are malformed, empty, or include URLs
             outside the allowed source set.
     """
+
+    normalized_allowed = {}
+    for url in allowed_urls:
+        normalized_allowed[_normalize_url(url)] = url
     cleaned_citations = []
     seen_citations = set()
+
 
     for citation in citations:
         if not isinstance(citation, str):
@@ -322,14 +342,16 @@ def _clean_citations(citations: list, allowed_urls: set[str]) -> list[str]:
         if not citation:
             raise ValueError("Empty citation returned by LLM")
 
-        if citation not in allowed_urls:
+        normalized_citation = _normalize_url(citation)
+        if normalized_citation not in normalized_allowed:
             raise ValueError(
                 f"synthesize_answer: LLM returned unknown citation URL: {citation}"
             )
 
-        if citation not in seen_citations:
-            seen_citations.add(citation)
-            cleaned_citations.append(citation)
+        original_url = normalized_allowed[normalized_citation]
+        if original_url not in seen_citations:
+            seen_citations.add(original_url)
+            cleaned_citations.append(original_url)
 
     if not cleaned_citations:
         raise ValueError("No valid citations found")
@@ -368,9 +390,9 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
         return {"errors": ["synthesize_answer: No valid sources found"]}
 
     if mode == "report":
-        synthesis_sources = valid_sources
+        synthesis_sources = valid_sources[:_REPORT_MAX_SOURCES]
     else:
-        synthesis_sources = valid_sources[:6]
+        synthesis_sources = valid_sources[:_RESEARCH_MAX_SOURCES]
 
     allowed_urls = {source["url"] for source in synthesis_sources}
 

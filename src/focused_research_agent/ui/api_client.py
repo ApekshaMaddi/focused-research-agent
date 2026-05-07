@@ -22,6 +22,7 @@ _RESEARCH_ENDPOINT = "/api/v1/research"
 _CHAT_ENDPOINT = "/api/v1/chat"
 _CONVERSATIONS_ENDPOINT = "/api/v1/conversations"
 _REPORT_ENDPOINT = "/api/v1/report"
+_REPORTS_ENDPOINT = "/api/v1/reports"
 
 _TIMEOUT_ERROR_MESSAGE = "Request timed out — research is taking too long."
 
@@ -295,7 +296,7 @@ def get_reports() -> list[dict]:
     settings = get_ui_settings()
     try:
         response = httpx.get(
-            f"{settings.api_base_url}{_REPORT_ENDPOINT}",
+            f"{settings.api_base_url}{_REPORTS_ENDPOINT}",
             timeout=settings.request_timeout,
         )
         if response.status_code == 200:

@@ -40,6 +40,7 @@ def fake_llm_config_groq():
         "temperature": 0.0,
         "max_retries": 2,
         "api_key": "fake-key",
+        "max_tokens": 4096,
     }
 
 
@@ -77,6 +78,7 @@ def test_get_llm_config_success(monkeypatch):
     monkeypatch.setenv("LLM_TEMPERATURE", "0.0")
     monkeypatch.setenv("LLM_MAX_RETRIES", "2")
     monkeypatch.setenv("LLM_API_KEY", "fake-key")
+    monkeypatch.setenv("LLM_MAX_TOKENS", "4096")
 
     result = llm_config_module.get_llm_config()
 
@@ -86,6 +88,7 @@ def test_get_llm_config_success(monkeypatch):
         "temperature": 0.0,
         "max_retries": 2,
         "api_key": "fake-key",
+        "max_tokens": 4096,
     }
 
 
