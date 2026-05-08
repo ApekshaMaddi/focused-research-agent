@@ -188,7 +188,9 @@ def test_serialize_then_deserialize_roundtrip():
 
 
 def test_save_run_creates_row_in_database(db, sample_state):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     count = db.query(ConversationRun).count()
 
@@ -196,14 +198,18 @@ def test_save_run_creates_row_in_database(db, sample_state):
 
 
 def test_save_run_returns_conversation_run_with_id(db, sample_state):
-    result = save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    result = save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     assert isinstance(result, ConversationRun)
     assert result.id is not None
 
 
 def test_save_run_stores_correct_field_values(db, sample_state):
-    result = save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    result = save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     assert result.run_id == "run-test-123"
     assert result.question == "What is quantum computing?"
@@ -215,7 +221,9 @@ def test_save_run_stores_correct_field_values(db, sample_state):
 
 
 def test_save_run_sets_conversation_title_on_turn_1(db, sample_state):
-    result = save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    result = save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     assert result.conversation_title == "What is quantum computing?"
 
@@ -228,7 +236,7 @@ def test_save_run_does_not_set_conversation_title_after_turn_1(
         sample_followup_state,
         conversation_id="conv-abc",
         turn_number=2,
-        mode="research"
+        mode="research",
     )
 
     assert result.conversation_title is None
@@ -248,14 +256,20 @@ def test_save_run_truncates_title_to_60_characters(db):
     }
 
     result = save_run(
-        db, long_question_state, conversation_id="conv-abc", turn_number=1,mode="research"
+        db,
+        long_question_state,
+        conversation_id="conv-abc",
+        turn_number=1,
+        mode="research",
     )
 
     assert len(result.conversation_title) == 60
 
 
 def test_save_run_serializes_list_fields(db, sample_state):
-    result = save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    result = save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     assert (
         result.queries
@@ -278,7 +292,9 @@ def test_save_run_handles_none_list_fields(db):
         "errors": ["init_run: No question provided"],
     }
 
-    result = save_run(db, minimal_state, conversation_id="conv-xyz", turn_number=1,mode="research")
+    result = save_run(
+        db, minimal_state, conversation_id="conv-xyz", turn_number=1, mode="research"
+    )
 
     assert result.queries is None
     assert result.sources is None
@@ -286,7 +302,9 @@ def test_save_run_handles_none_list_fields(db):
 
 
 def test_save_run_sets_created_at_and_updated_at(db, sample_state):
-    result = save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    result = save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     assert result.created_at is not None
     assert result.updated_at is not None
@@ -300,8 +318,16 @@ def test_save_run_sets_created_at_and_updated_at(db, sample_state):
 def test_get_conversation_history_returns_turns_in_chronological_order(
     db, sample_state, sample_followup_state
 ):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
-    save_run(db, sample_followup_state, conversation_id="conv-abc", turn_number=2,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
+    save_run(
+        db,
+        sample_followup_state,
+        conversation_id="conv-abc",
+        turn_number=2,
+        mode="research",
+    )
 
     history = get_conversation_history(db, conversation_id="conv-abc", max_turns=5)
 
@@ -311,7 +337,9 @@ def test_get_conversation_history_returns_turns_in_chronological_order(
 
 
 def test_get_conversation_history_returns_correct_fields(db, sample_state):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     history = get_conversation_history(db, conversation_id="conv-abc", max_turns=5)
 
@@ -325,8 +353,16 @@ def test_get_conversation_history_returns_correct_fields(db, sample_state):
 def test_get_conversation_history_respects_max_turns_limit(
     db, sample_state, sample_followup_state
 ):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
-    save_run(db, sample_followup_state, conversation_id="conv-abc", turn_number=2,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
+    save_run(
+        db,
+        sample_followup_state,
+        conversation_id="conv-abc",
+        turn_number=2,
+        mode="research",
+    )
 
     history = get_conversation_history(db, conversation_id="conv-abc", max_turns=1)
 
@@ -347,8 +383,16 @@ def test_get_conversation_history_returns_empty_list_for_unknown_conversation(
 def test_get_conversation_history_only_returns_turns_for_given_conversation(
     db, sample_state, sample_followup_state
 ):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
-    save_run(db, sample_followup_state, conversation_id="conv-xyz", turn_number=1,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
+    save_run(
+        db,
+        sample_followup_state,
+        conversation_id="conv-xyz",
+        turn_number=1,
+        mode="research",
+    )
 
     history = get_conversation_history(db, conversation_id="conv-abc", max_turns=5)
 
@@ -370,9 +414,19 @@ def test_get_all_conversations_returns_empty_list_when_no_data(db):
 def test_get_all_conversations_returns_one_entry_per_conversation(
     db, sample_state, sample_followup_state
 ):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
-    save_run(db, sample_followup_state, conversation_id="conv-abc", turn_number=2,mode="research")
-    save_run(db, sample_state, conversation_id="conv-xyz", turn_number=1,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
+    save_run(
+        db,
+        sample_followup_state,
+        conversation_id="conv-abc",
+        turn_number=2,
+        mode="research",
+    )
+    save_run(
+        db, sample_state, conversation_id="conv-xyz", turn_number=1, mode="research"
+    )
 
     result = get_all_conversations(db)
 
@@ -380,7 +434,9 @@ def test_get_all_conversations_returns_one_entry_per_conversation(
 
 
 def test_get_all_conversations_returns_correct_fields(db, sample_state):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     result = get_all_conversations(db)
 
@@ -392,8 +448,16 @@ def test_get_all_conversations_returns_correct_fields(db, sample_state):
 def test_get_all_conversations_returns_newest_first(
     db, sample_state, sample_followup_state
 ):
-    save_run(db, sample_state, conversation_id="conv-first", turn_number=1,mode="research")
-    save_run(db, sample_followup_state, conversation_id="conv-second", turn_number=1,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-first", turn_number=1, mode="research"
+    )
+    save_run(
+        db,
+        sample_followup_state,
+        conversation_id="conv-second",
+        turn_number=1,
+        mode="research",
+    )
 
     result = get_all_conversations(db)
 
@@ -417,8 +481,16 @@ def test_get_conversation_turns_returns_empty_list_for_unknown_conversation(
 def test_get_conversation_turns_returns_all_turns_in_order(
     db, sample_state, sample_followup_state
 ):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
-    save_run(db, sample_followup_state, conversation_id="conv-abc", turn_number=2,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
+    save_run(
+        db,
+        sample_followup_state,
+        conversation_id="conv-abc",
+        turn_number=2,
+        mode="research",
+    )
 
     result = get_conversation_turns(db, conversation_id="conv-abc")
 
@@ -428,7 +500,9 @@ def test_get_conversation_turns_returns_all_turns_in_order(
 
 
 def test_get_conversation_turns_deserializes_list_fields(db, sample_state):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     result = get_conversation_turns(db, conversation_id="conv-abc")
 
@@ -442,7 +516,9 @@ def test_get_conversation_turns_deserializes_list_fields(db, sample_state):
 
 
 def test_get_conversation_turns_returns_correct_fields(db, sample_state):
-    save_run(db, sample_state, conversation_id="conv-abc", turn_number=1,mode="research")
+    save_run(
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="research"
+    )
 
     result = get_conversation_turns(db, conversation_id="conv-abc")
 
@@ -452,24 +528,30 @@ def test_get_conversation_turns_returns_correct_fields(db, sample_state):
     assert result[0]["answer"] == "Quantum computing uses quantum mechanical phenomena."
     assert "created_at" in result[0]
 
+
 def test_save_run_stores_mode_field(db, sample_state):
     result = save_run(
-        db, sample_state, conversation_id="conv-abc",
-        turn_number=1, mode="report"
+        db, sample_state, conversation_id="conv-abc", turn_number=1, mode="report"
     )
     assert result.mode == "report"
 
 
 def test_get_all_reports_returns_empty_list_when_no_data(db):
     from focused_research_agent.database.repository import get_all_reports
+
     result = get_all_reports(db)
     assert result == []
 
 
 def test_get_all_reports_returns_only_report_mode_runs(db, sample_state):
     from focused_research_agent.database.repository import get_all_reports
-    save_run(db, sample_state, conversation_id="conv-chat", turn_number=1, mode="research")
-    save_run(db, sample_state, conversation_id="conv-report", turn_number=1, mode="report")
+
+    save_run(
+        db, sample_state, conversation_id="conv-chat", turn_number=1, mode="research"
+    )
+    save_run(
+        db, sample_state, conversation_id="conv-report", turn_number=1, mode="report"
+    )
     result = get_all_reports(db)
     assert len(result) == 1
     assert result[0]["conversation_id"] == "conv-report"
@@ -477,11 +559,15 @@ def test_get_all_reports_returns_only_report_mode_runs(db, sample_state):
 
 def test_get_all_reports_returns_correct_fields(db, sample_state):
     from focused_research_agent.database.repository import get_all_reports
-    save_run(db, sample_state, conversation_id="conv-report", turn_number=1, mode="report")
+
+    save_run(
+        db, sample_state, conversation_id="conv-report", turn_number=1, mode="report"
+    )
     result = get_all_reports(db)
     assert result[0]["conversation_id"] == "conv-report"
     assert result[0]["title"] == "What is quantum computing?"
     assert "created_at" in result[0]
+
 
 def test_save_run_stores_and_retrieves_images(db, sample_state):
     """

@@ -7,9 +7,10 @@ short, diverse, search-engine-style queries that directly support answering
 the user's research question.
 """
 
+import logging
+
 from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
-import logging
 
 logger = logging.getLogger(__name__)
 

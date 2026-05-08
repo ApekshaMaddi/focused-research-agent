@@ -1,3 +1,21 @@
+"""
+Search provider factory for the Focused Research Agent.
+
+This module contains the factory function responsible for instantiating
+the correct search provider implementation based on the SEARCH_PROVIDER
+environment variable.
+
+Adding a new search provider requires:
+- Implementing the SearchProvider interface
+- Adding a new branch in get_search_provider
+
+No other files need to change — all callers go through this factory.
+
+Architecturally, this module belongs to the services layer and implements
+the Factory pattern. It keeps provider selection logic in one place and
+decouples the rest of the application from concrete provider classes.
+"""
+
 from focused_research_agent.config.search_config import get_search_config
 from focused_research_agent.interfaces.search_interface import SearchProvider
 from focused_research_agent.services.search_provider_tavily import TavilySearchClient

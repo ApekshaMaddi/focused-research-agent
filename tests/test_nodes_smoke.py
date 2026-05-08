@@ -112,8 +112,9 @@ class FakeSearchProvider:
                     "score": 0.89,
                 },
             ],
-            [],    # ← empty images list
+            [],  # ← empty images list
         )
+
 
 def fake_get_llm_provider():
     return FakeLLMProvider()
@@ -130,7 +131,9 @@ def test_graph_smoke_run(monkeypatch):
 
     monkeypatch.setattr(llm_factory, "get_llm_provider", fake_get_llm_provider)
     monkeypatch.setattr(
-        search_factory_module, "get_search_provider", fake_get_search_provider  # ← change
+        search_factory_module,
+        "get_search_provider",
+        fake_get_search_provider,  # ← change
     )
 
     graph_module = importlib.reload(graph_module)

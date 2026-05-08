@@ -28,7 +28,7 @@ class FakeGroqLLMProvider:
     pass
 
 
-class FakeTavilySearchClient():
+class FakeTavilySearchClient:
     def __init__(self, search_depth: str | None = None):  # ← add this
         pass
 
@@ -220,6 +220,7 @@ def test_get_search_provider_raises_for_unsupported_provider(monkeypatch):
     with pytest.raises(ValueError, match="Unsupported search provider"):
         search_factory_module.get_search_provider()
 
+
 def test_get_llm_config_raises_when_max_tokens_invalid(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "groq")
     monkeypatch.setenv("LLM_MODEL", "llama-test")
@@ -230,6 +231,7 @@ def test_get_llm_config_raises_when_max_tokens_invalid(monkeypatch):
 
     with pytest.raises(ValueError, match="LLM_MAX_TOKENS must be an int"):
         llm_config_module.get_llm_config()
+
 
 def fake_ollama_llm_config():
     return {
@@ -254,7 +256,7 @@ def test_get_llm_provider_returns_ollama_provider(monkeypatch):
     monkeypatch.setattr(ollama_module, "get_llm_config", fake_ollama_llm_config)
 
     from focused_research_agent.services.llm_provider_ollama import OllamaLLMProvider
+
     result = llm_factory_module.get_llm_provider()
 
     assert isinstance(result, OllamaLLMProvider)
-

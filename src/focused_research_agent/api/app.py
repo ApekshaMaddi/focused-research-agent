@@ -23,6 +23,7 @@ from focused_research_agent.database.database import init_db
 
 logger = logging.getLogger(__name__)
 
+
 def register_routers(app: FastAPI) -> None:
     """
     Register all API routers on the FastAPI app.

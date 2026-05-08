@@ -1,8 +1,22 @@
 """
 Ollama-backed implementation of the LLM provider contract.
 
-Supports both local Ollama instances and Ollama Cloud API.
-When LLM_API_KEY is set, requests are routed to Ollama Cloud.
+This module provides the OllamaLLMProvider class which implements the
+LLMProvider interface using the Ollama client library. It supports both
+local Ollama instances and Ollama Cloud API.
+
+When LLM_API_KEY is set and is not 'not-needed', requests are routed
+to Ollama Cloud at https://ollama.com with Bearer token authentication.
+When no API key is set, a local Ollama instance at the default port is
+used instead.
+
+The JSON parsing pipeline is identical to GroqLLMProvider — code fence
+stripping followed by direct JSON parsing, with fallback extraction from
+surrounding text.
+
+Architecturally, this module belongs to the services layer and implements
+the Adapter pattern — it translates between the Ollama client API and the
+internal LLMProvider interface used throughout the project.
 """
 
 import json
@@ -69,7 +83,7 @@ class OllamaLLMProvider(LLMProvider):
         try:
             return json.loads(text)
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON from LLM: {e}")
+            logger.error("Invalid JSON from LLM: %s", e)
 
         candidate = self._extract_json_candidate(text)
 

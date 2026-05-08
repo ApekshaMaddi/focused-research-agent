@@ -1,3 +1,25 @@
+"""
+Groq-backed implementation of the LLM provider contract.
+
+This module provides the GroqLLMProvider class which implements the
+LLMProvider interface using LangChain's init_chat_model with the Groq
+provider. It handles prompt validation, JSON-only instruction appending,
+code fence stripping, and fallback JSON extraction from surrounding text.
+
+The JSON parsing pipeline works in two stages:
+1. Direct json.loads on the cleaned response text
+2. If that fails, extract the first JSON object or array substring and
+   attempt to parse that instead
+
+Static helpers are used for all pure transformation functions that do
+not require instance state, following the same pattern as the rest of
+the project.
+
+Architecturally, this module belongs to the services layer and implements
+the Adapter pattern — it translates between the LangChain/Groq API and
+the internal LLMProvider interface used throughout the project.
+"""
+
 import json
 import logging
 
@@ -175,7 +197,7 @@ class GroqLLMProvider(LLMProvider):
         try:
             return json.loads(text)
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON from LLM: {e}")
+            logger.error("Invalid JSON from LLM: %s", e)
 
         candidate = self._extract_json_candidate(text)
 
@@ -185,7 +207,9 @@ class GroqLLMProvider(LLMProvider):
         try:
             return json.loads(candidate)
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON from LLM: {e}\nRaw output:\n{candidate[:400]}")
+            logger.error(
+                "Invalid JSON from LLM: %s\nRaw output:\n%s", e, candidate[:400]
+            )
             raise ValueError(
                 f"Invalid JSON from LLM: {e}\nRaw output:\n{candidate[:400]}"
             )

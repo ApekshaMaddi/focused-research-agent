@@ -19,7 +19,6 @@ Why it matters:
 - Confirms the structured markdown answer passes through the API correctly
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from focused_research_agent.api.app import create_app
@@ -206,11 +205,12 @@ def test_report_returns_structured_400_for_application_error():
     Verify that the report route returns the centralized 400 error
     JSON shape when the use case raises ApplicationError.
     """
+
     def fake_application_error_use_case(question: str, db) -> dict:
         raise ApplicationError("User query must not be empty")
 
-    app.dependency_overrides[get_report_use_case] = (
-        lambda: fake_application_error_use_case
+    app.dependency_overrides[get_report_use_case] = lambda: (
+        fake_application_error_use_case
     )
 
     try:
@@ -235,11 +235,12 @@ def test_report_returns_structured_500_for_unexpected_exception():
     Verify that the report route returns the centralized 500 error
     JSON shape when the use case raises an unexpected exception.
     """
+
     def fake_unexpected_error_use_case(question: str, db) -> dict:
         raise RuntimeError("Unexpected test failure")
 
-    app.dependency_overrides[get_report_use_case] = (
-        lambda: fake_unexpected_error_use_case
+    app.dependency_overrides[get_report_use_case] = lambda: (
+        fake_unexpected_error_use_case
     )
 
     local_client = TestClient(app, raise_server_exceptions=False)
