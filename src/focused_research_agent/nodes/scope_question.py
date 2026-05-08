@@ -1,12 +1,17 @@
 from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def scope_question(state: ResearchState, llm_provider: LLMProvider) -> dict:
 
     user_query = (state.get("question") or "").strip()
+    run_id = state.get("run_id", "unknown")
 
     if not user_query:
+        logger.error("scope_question: No user query provided. run_id=%s", run_id)
         return {"errors": ["scope_question: No user query provided"]}
 
     scope_question_system_prompt = """
@@ -35,6 +40,7 @@ def scope_question(state: ResearchState, llm_provider: LLMProvider) -> dict:
     try:
         response = llm_provider.generate_json(question_scope)
     except Exception as e:
+        logger.error("scope_question failed. run_id=%s error=%s", run_id, e)
         return {"errors": [f"scope_question failed: {e}"]}
 
     if not isinstance(response, dict):
@@ -69,6 +75,7 @@ def scope_question(state: ResearchState, llm_provider: LLMProvider) -> dict:
     if not isinstance(constraints, dict):
         return {"errors": ["scope_question: 'constraints' must be a dict"]}
 
+    logger.info("Scope generated. run_id=%s scope='%s'", run_id, scope.strip()[:60])
     return {
         "scope": scope.strip(),
         "assumptions": cleaned_assumptions,

@@ -101,6 +101,7 @@ def render_research_details(data: dict) -> None:
         st.caption(f"Run ID: {data['run_id']}")
     st.divider()
 
+
 def _extract_image_urls(sources: list[dict]) -> list[str]:
     """
     Extract image URLs from a list of source dicts.
@@ -125,6 +126,7 @@ def _extract_image_urls(sources: list[dict]) -> list[str]:
             image_urls.append(source["url"])
 
     return image_urls
+
 
 def render_sources(sources: list[dict], images: list[str] | None = None) -> None:
     """
@@ -201,4 +203,3 @@ def render_metrics(data: dict) -> None:
         st.metric("✅ Citations", citations_count)
 
     st.divider()
-

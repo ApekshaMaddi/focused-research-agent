@@ -243,6 +243,7 @@ def get_conversation_turns(
 
     return turns
 
+
 def get_all_reports(db: Session) -> list[dict]:
     """
     Fetch a summary list of all report runs for the report history
@@ -268,10 +269,12 @@ def get_all_reports(db: Session) -> list[dict]:
 
     reports = []
     for run in runs:
-        reports.append({
-            "conversation_id": run.conversation_id,
-            "title": run.conversation_title,
-            "created_at": run.created_at.isoformat(),
-        })
+        reports.append(
+            {
+                "conversation_id": run.conversation_id,
+                "title": run.conversation_title,
+                "created_at": run.created_at.isoformat(),
+            }
+        )
 
     return reports

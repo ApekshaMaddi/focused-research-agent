@@ -306,6 +306,7 @@ def _validate_synthesis_response(response: object) -> tuple[str, list]:
         raise ValueError(INVALID_LLM_RESPONSE_ERROR_MESSAGE)
     return (answer, citations)
 
+
 def _normalize_url(url: str) -> str:
     """Normalize a URL for comparison by stripping trailing slashes."""
     return url.strip().rstrip("/").lower()
@@ -331,7 +332,6 @@ def _clean_citations(citations: list, allowed_urls: set[str]) -> list[str]:
         normalized_allowed[_normalize_url(url)] = url
     cleaned_citations = []
     seen_citations = set()
-
 
     for citation in citations:
         if not isinstance(citation, str):

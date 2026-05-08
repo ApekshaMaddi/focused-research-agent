@@ -67,6 +67,7 @@ def _render_sidebar() -> None:
                         }
                     st.rerun()
 
+
 def _render_report_input() -> str | None:
     question = st.text_area(
         "What would you like a full report on?",

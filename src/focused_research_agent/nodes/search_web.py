@@ -2,6 +2,8 @@ from focused_research_agent.interfaces.search_interface import SearchProvider
 from focused_research_agent.state import ResearchState
 
 _NUMBER_OF_IMAGES = 12
+
+
 def search_web(state: ResearchState, search_provider: SearchProvider) -> dict:
     """Search the web using the generated queries.
 

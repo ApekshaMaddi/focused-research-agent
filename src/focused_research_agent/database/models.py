@@ -75,7 +75,6 @@ class ConversationRun(Base):
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
 
-
     mode = Column(String, nullable=False, default="research")
 
     # Images to be used in report
