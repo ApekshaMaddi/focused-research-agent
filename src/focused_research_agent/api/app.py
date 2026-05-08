@@ -10,6 +10,7 @@ on app construction and wiring while delegating request handling to routers
 and use-case execution to the application layer.
 """
 
+import logging
 from fastapi import FastAPI
 
 from focused_research_agent.api.api_exception_handlers import (
@@ -20,6 +21,7 @@ from focused_research_agent.api.routers.v1 import api_v1_router
 from focused_research_agent.config.api_config import get_api_settings
 from focused_research_agent.database.database import init_db
 
+logger = logging.getLogger(__name__)
 
 def register_routers(app: FastAPI) -> None:
     """
@@ -54,7 +56,16 @@ def create_app() -> FastAPI:
     )
 
     init_db()
+    logger.info(  # ← add
+        "Application started. title=%s version=%s debug=%s",
+        settings.title,
+        settings.version,
+        settings.debug,
+    )
 
     register_routers(app)
     register_exception_handlers(app)
+
+    logger.info("Routers and exception handlers registered.")
+
     return app

@@ -1,7 +1,11 @@
+
+import logging
 from urllib.parse import urlparse
 
 from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
+
+logger = logging.getLogger(__name__)
 
 INVALID_LLM_RESPONSE_ERROR_MESSAGE = "Invalid response obtained from LLM"
 _REPORT_MAX_SOURCES = 15
@@ -377,16 +381,22 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     question = (state.get("question") or "").strip()
     sources = state.get("sources")
     conversation_history = state.get("conversation_history")
+    run_id = state.get("run_id", "unknown")
 
     if not question:
+        logger.error("synthesize_answer: No question found. run_id=%s", run_id)
         return {"errors": ["synthesize_answer: No question found"]}
 
     if not isinstance(sources, list) or not sources:
+        logger.error("synthesize_answer: No sources found. run_id=%s", run_id)
         return {"errors": ["synthesize_answer: No sources found"]}
 
     valid_sources = _collect_valid_sources(sources)
 
     if not valid_sources:
+        logger.warning(   
+            "synthesize_answer: No valid sources after filtering. run_id=%s", run_id
+        )
         return {"errors": ["synthesize_answer: No valid sources found"]}
 
     if mode == "report":
@@ -406,14 +416,24 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     try:
         response = llm_provider.generate_json(prompt)
     except Exception as e:
+        logger.error("synthesize_answer failed. run_id=%s error=%s", run_id, e)
         return {"errors": [f"synthesize_answer failed: {e}"]}
 
     try:
         answer, citations = _validate_synthesis_response(response)
         cleaned_citations = _clean_citations(citations, allowed_urls)
     except ValueError as e:
+        logger.error(
+            "synthesize_answer: Validation failed. run_id=%s error=%s", run_id, e
+        )
         return {"errors": [str(e)]}
 
+    logger.info(    # ← add
+        "Synthesis completed. run_id=%s mode=%s citations=%d",
+        run_id,
+        mode,
+        len(cleaned_citations),
+    )
     max_citations = 5 if mode == "report" else 3
     return {
         "answer": answer.strip(),

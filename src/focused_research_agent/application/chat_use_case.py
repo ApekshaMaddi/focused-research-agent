@@ -21,6 +21,8 @@ database concerns out of the core execution path.
 
 import uuid
 import logging
+
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from focused_research_agent.application.exceptions import ApplicationError
@@ -101,6 +103,12 @@ def execute_chat_turn(db: Session, conversation_id: str | None, question: str) -
     if conversation_id is None:
         conversation_id = str(uuid.uuid4())  # type: ignore[attr-defined]
 
+    logger.info(
+        "Chat turn started. conversation_id=%s turn question='%s'",
+        conversation_id,
+        user_query[:50],
+    )
+
     conversation_history = get_conversation_history(
         db, conversation_id, MAX_HISTORY_TURNS
     )
@@ -122,9 +130,17 @@ def execute_chat_turn(db: Session, conversation_id: str | None, question: str) -
 
     try:
         save_run(db, result, conversation_id, turn_number)
-    except Exception:  # noqa: BLE001
+    except SQLAlchemyError:
         logger.exception("Failed to save chat run to database")
 
     result["conversation_id"] = conversation_id
     result["turn_number"] = turn_number
+
+    logger.info(
+        "Chat turn completed. conversation_id=%s turn=%d status=%s",
+        conversation_id,
+        turn_number,
+        result.get("status"),
+    )
+
     return result
