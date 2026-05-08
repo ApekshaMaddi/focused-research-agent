@@ -1,3 +1,25 @@
+"""
+Tavily-backed implementation of the search provider contract.
+
+This module provides the TavilySearchClient class which implements the
+SearchProvider interface using the Tavily web search API. It handles
+query validation, API calls, response normalization, URL deduplication,
+and image extraction.
+
+Key design decisions:
+- search_depth can be overridden at instantiation time to support both
+  basic search (quick research mode) and advanced search (report mode)
+  without changing any other code.
+- include_images=True is passed to every Tavily call so image URLs are
+  available for UI rendering without a separate API call.
+- Results are deduplicated by URL across all queries before returning,
+  ensuring the same source is never counted twice.
+
+Architecturally, this module belongs to the services layer and implements
+the Adapter pattern — it translates between the Tavily API contract and
+the internal SearchResult TypedDict used throughout the project.
+"""
+
 import logging
 
 # noinspection PyPackageRequirements
@@ -194,7 +216,7 @@ class TavilySearchClient(SearchProvider):
             len(normalized_results),
             len(images),
         )
-        
+
         return normalized_results, images
 
     def search(self, queries: list[str]) -> tuple[list[SearchResult], list[str]]:

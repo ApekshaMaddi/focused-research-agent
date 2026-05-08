@@ -318,10 +318,12 @@ def test_execute_chat_turn_persists_run_to_database(db, monkeypatch):
 def test_execute_chat_turn_returns_result_even_when_save_fails(db, monkeypatch):
     monkeypatch.setattr(chat_use_case_module, "build_graph", fake_build_graph)
 
-    from sqlalchemy.exc import SQLAlchemyError    # ← add import
+    from sqlalchemy.exc import SQLAlchemyError  # ← add import
 
     def fake_save_run(*args, **kwargs):
-        raise SQLAlchemyError("Database write failed")    # ← change RuntimeError to SQLAlchemyError
+        raise SQLAlchemyError(
+            "Database write failed"
+        )  # ← change RuntimeError to SQLAlchemyError
 
     monkeypatch.setattr(chat_use_case_module, "save_run", fake_save_run)
 

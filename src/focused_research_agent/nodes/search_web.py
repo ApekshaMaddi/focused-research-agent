@@ -1,5 +1,18 @@
+"""
+Web search node for the Focused Research Agent.
 
+This module contains the node responsible for executing web searches
+using the generated queries. It receives an injected search provider
+via closure from graph.py — the same dependency injection pattern
+used for LLM nodes.
 
+Search results are deduplicated and normalized by the search provider
+before being stored in state. Images returned by the provider are
+capped at _NUMBER_OF_IMAGES and stored separately for UI rendering.
+
+If the search provider raises an exception, an error is recorded in
+state and the graph routes to handle_error.
+"""
 
 import logging
 

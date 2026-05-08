@@ -14,6 +14,7 @@ List fields (queries, sources, citations, errors) are serialized to
 JSON strings on save and deserialized back to Python lists on read.
 This conversion is transparent to the rest of the application.
 """
+
 import logging
 import json
 from datetime import datetime, timezone
@@ -21,6 +22,7 @@ from sqlalchemy.orm import Session
 from focused_research_agent.database.models import ConversationRun
 
 logger = logging.getLogger(__name__)
+
 
 def _serialize(value: list | None) -> str | None:
     """
@@ -205,7 +207,7 @@ def get_all_conversations(db: Session) -> list[dict]:
                 "created_at": run.created_at.isoformat(),
             }
         )
-        
+
     logger.debug("All conversations fetched. count=%d", len(conversations))
     return conversations
 

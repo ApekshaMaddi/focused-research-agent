@@ -43,7 +43,7 @@ def make_initial_state(question: str) -> ResearchState:
         "debug": None,
         "conversation_id": None,
         "conversation_history": None,
-        "mode": "research",   # ← fixed: was str (the type), should be "research" (the value)
+        "mode": "research",  # ← fixed: was str (the type), should be "research" (the value)
         "images": None,
     }
 

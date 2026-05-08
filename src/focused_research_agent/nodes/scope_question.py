@@ -1,6 +1,17 @@
+"""
+Question scoping node for the Focused Research Agent.
 
+This module contains the node responsible for interpreting and scoping
+the user's research question. It uses the LLM provider to produce a
+focused scope string, a list of assumptions, and a constraints dict
+that guide the rest of the research workflow.
+
+If the LLM response is invalid or missing required keys, an error is
+recorded in state and the graph routes to handle_error.
+"""
 
 import logging
+
 from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
 

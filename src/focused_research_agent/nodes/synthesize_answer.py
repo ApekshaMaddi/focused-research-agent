@@ -1,3 +1,21 @@
+"""
+Answer synthesis node for the Focused Research Agent.
+
+This module contains the node responsible for synthesizing a final answer
+from the collected and ranked web sources. It supports two modes:
+
+- research: Produces a concise answer with 1 to 3 citations using the
+  top ranked sources. Includes conversation history context when available
+  for multi-turn chat sessions.
+
+- report: Produces a structured long-form markdown report with four
+  sections (Introduction, Key Findings, Analysis, Conclusion) and 3 to 5
+  citations using a larger source set.
+
+Sources are validated, normalized, and ranked by domain trust score before
+being passed to the LLM. Citation URLs returned by the LLM are validated
+against the allowed source set and normalized before being stored in state.
+"""
 
 import logging
 from urllib.parse import urlparse
@@ -394,7 +412,7 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     valid_sources = _collect_valid_sources(sources)
 
     if not valid_sources:
-        logger.warning(   
+        logger.warning(
             "synthesize_answer: No valid sources after filtering. run_id=%s", run_id
         )
         return {"errors": ["synthesize_answer: No valid sources found"]}
@@ -428,7 +446,7 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
         )
         return {"errors": [str(e)]}
 
-    logger.info(    # ← add
+    logger.info(  # ← add
         "Synthesis completed. run_id=%s mode=%s citations=%d",
         run_id,
         mode,

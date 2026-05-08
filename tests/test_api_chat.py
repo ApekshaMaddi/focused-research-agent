@@ -436,6 +436,7 @@ def test_get_conversation_returns_turns_for_existing_conversation(
     finally:
         app.dependency_overrides.clear()
 
+
 def test_get_reports_returns_empty_list_when_no_data(db_session):
     def override_get_db():
         yield db_session
@@ -452,7 +453,14 @@ def test_get_reports_returns_empty_list_when_no_data(db_session):
 
 def test_get_reports_returns_seeded_reports(db_session, sample_state):
     from focused_research_agent.database.repository import save_run as repo_save_run
-    repo_save_run(db_session, sample_state, conversation_id="conv-report", turn_number=1, mode="report")
+
+    repo_save_run(
+        db_session,
+        sample_state,
+        conversation_id="conv-report",
+        turn_number=1,
+        mode="report",
+    )
 
     def override_get_db():
         yield db_session
@@ -467,4 +475,3 @@ def test_get_reports_returns_seeded_reports(db_session, sample_state):
         assert data[0]["conversation_id"] == "conv-report"
     finally:
         app.dependency_overrides.clear()
-

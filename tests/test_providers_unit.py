@@ -23,6 +23,8 @@ import focused_research_agent.services.llm_provider_groq as llm_provider_module
 import focused_research_agent.services.search_provider_tavily as search_provider_module
 from focused_research_agent.services.llm_provider_groq import GroqLLMProvider
 from focused_research_agent.services.search_provider_tavily import TavilySearchClient
+import focused_research_agent.services.llm_provider_ollama as ollama_provider_module
+from focused_research_agent.services.llm_provider_ollama import OllamaLLMProvider
 
 
 class FakeLLM:
@@ -38,12 +40,20 @@ class FakeTavilyClient:
         self._responses = responses
         self.calls = []
 
-    def search(self, query: str, search_depth: str, max_results: int, include_images: bool = False):
-        self.calls.append({
-            "query": query,
-            "search_depth": search_depth,
-            "max_results": max_results,
-        })
+    def search(
+        self,
+        query: str,
+        search_depth: str,
+        max_results: int,
+        include_images: bool = False,
+    ):
+        self.calls.append(
+            {
+                "query": query,
+                "search_depth": search_depth,
+                "max_results": max_results,
+            }
+        )
         return self._responses.pop(0)
 
 
@@ -274,22 +284,22 @@ def test_tavily_search_raises_when_score_missing(monkeypatch):
     with pytest.raises(ValueError, match="Result missing score"):
         provider.search(["query one"])
 
+
 def test_tavily_client_overrides_search_depth_when_provided(monkeypatch):
     monkeypatch.setattr(
-        search_provider_module,    # ← change tavily_provider_module to this
+        search_provider_module,  # ← change tavily_provider_module to this
         "get_search_config",
         fake_search_config,
     )
     monkeypatch.setattr(
-        search_provider_module,    # ← same here
+        search_provider_module,  # ← same here
         "TavilyClient",
-        build_fake_tavily_client([]),  # ← use build_fake_tavily_client, not FakeTavilyClient directly
+        build_fake_tavily_client(
+            []
+        ),  # ← use build_fake_tavily_client, not FakeTavilyClient directly
     )
     client = TavilySearchClient(search_depth="advanced")
     assert client.search_config["search_depth"] == "advanced"
-
-import focused_research_agent.services.llm_provider_ollama as ollama_provider_module
-from focused_research_agent.services.llm_provider_ollama import OllamaLLMProvider
 
 
 def fake_ollama_llm_config():
@@ -305,20 +315,21 @@ def fake_ollama_llm_config():
 
 def build_fake_ollama_client_class(content: str):
     """Return a fake Client class that returns controlled content."""
+
     class _FakeClient:
         def __init__(self, **kwargs):
             pass
 
         def chat(self, model: str, messages: list):
-            return SimpleNamespace(
-                message=SimpleNamespace(content=content)
-            )
+            return SimpleNamespace(message=SimpleNamespace(content=content))
 
     return _FakeClient
 
 
 def test_ollama_generate_json_rejects_empty_prompt(monkeypatch):
-    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module, "get_llm_config", fake_ollama_llm_config
+    )
     monkeypatch.setattr(
         ollama_provider_module, "Client", build_fake_ollama_client_class('{"ok": true}')
     )
@@ -330,9 +341,13 @@ def test_ollama_generate_json_rejects_empty_prompt(monkeypatch):
 
 
 def test_ollama_generate_json_parses_valid_json(monkeypatch):
-    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
     monkeypatch.setattr(
-        ollama_provider_module, "Client", build_fake_ollama_client_class('{"answer": "ok"}')
+        ollama_provider_module, "get_llm_config", fake_ollama_llm_config
+    )
+    monkeypatch.setattr(
+        ollama_provider_module,
+        "Client",
+        build_fake_ollama_client_class('{"answer": "ok"}'),
     )
 
     provider = OllamaLLMProvider()
@@ -342,7 +357,9 @@ def test_ollama_generate_json_parses_valid_json(monkeypatch):
 
 
 def test_ollama_generate_json_parses_fenced_json(monkeypatch):
-    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module, "get_llm_config", fake_ollama_llm_config
+    )
     monkeypatch.setattr(
         ollama_provider_module,
         "Client",
@@ -356,7 +373,9 @@ def test_ollama_generate_json_parses_fenced_json(monkeypatch):
 
 
 def test_ollama_generate_json_parses_json_from_surrounding_text(monkeypatch):
-    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module, "get_llm_config", fake_ollama_llm_config
+    )
     monkeypatch.setattr(
         ollama_provider_module,
         "Client",
@@ -370,7 +389,9 @@ def test_ollama_generate_json_parses_json_from_surrounding_text(monkeypatch):
 
 
 def test_ollama_generate_json_raises_when_no_json_found(monkeypatch):
-    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module, "get_llm_config", fake_ollama_llm_config
+    )
     monkeypatch.setattr(
         ollama_provider_module,
         "Client",
@@ -395,11 +416,11 @@ def test_ollama_uses_cloud_client_when_api_key_provided(monkeypatch):
             captured_kwargs.update(kwargs)
 
         def chat(self, model: str, messages: list):
-            return SimpleNamespace(
-                message=SimpleNamespace(content='{"ok": true}')
-            )
+            return SimpleNamespace(message=SimpleNamespace(content='{"ok": true}'))
 
-    monkeypatch.setattr(ollama_provider_module, "get_llm_config", fake_ollama_llm_config)
+    monkeypatch.setattr(
+        ollama_provider_module, "get_llm_config", fake_ollama_llm_config
+    )
     monkeypatch.setattr(ollama_provider_module, "Client", FakeCloudClient)
 
     OllamaLLMProvider()

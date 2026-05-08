@@ -29,7 +29,6 @@ import focused_research_agent.application.report_use_case as report_use_case_mod
 from focused_research_agent.application.exceptions import ApplicationError
 from focused_research_agent.application.report_use_case import execute_report
 from focused_research_agent.database.models import Base
-from focused_research_agent.database.repository import get_conversation_turns
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +244,7 @@ def test_execute_report_persists_run_to_database(db, monkeypatch):
     execute_report(question="What is quantum computing?", db=db)
 
     from focused_research_agent.database.models import ConversationRun
+
     count = db.query(ConversationRun).count()
     assert count == 1
 

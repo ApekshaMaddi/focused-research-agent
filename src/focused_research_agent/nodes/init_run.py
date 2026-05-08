@@ -1,6 +1,16 @@
-from focused_research_agent.state import ResearchState
-import uuid
+"""
+Run initialization node for the Focused Research Agent.
+
+This module contains the entry node for the LangGraph research workflow.
+It generates a unique run ID and validates that a user question is present
+before any other node executes. If no question is found, an error is
+recorded in state and the graph routes to handle_error.
+"""
+
 import logging
+import uuid
+
+from focused_research_agent.state import ResearchState
 
 logger = logging.getLogger(__name__)
 

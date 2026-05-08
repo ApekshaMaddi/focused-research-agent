@@ -68,7 +68,7 @@ def execute_report(question: str, db: Session) -> dict:
         raise ApplicationError(str(exc)) from exc
 
     logger.info("Report use case started. question='%s'", user_query[:50])
-    
+
     initial_state = make_initial_state(user_query)
     initial_state["mode"] = "report"
 

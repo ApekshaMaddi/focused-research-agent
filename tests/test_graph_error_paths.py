@@ -34,7 +34,7 @@ class FakeLLMProvider:
 
 class FakeSearchProvider:
     def search(self, queries: list[str]) -> tuple[list[dict], list[str]]:
-        return( [],[])
+        return ([], [])
 
 
 def fake_get_llm_provider():
