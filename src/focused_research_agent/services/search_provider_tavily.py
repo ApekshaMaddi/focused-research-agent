@@ -188,6 +188,13 @@ class TavilySearchClient(SearchProvider):
         for item in response_results:
             normalized_results.append(self._normalize_result(item, query))
 
+        logger.debug(  # ← add
+            "Query completed. query='%s' results=%d images=%d",
+            query[:60],
+            len(normalized_results),
+            len(images),
+        )
+        
         return normalized_results, images
 
     def search(self, queries: list[str]) -> tuple[list[SearchResult], list[str]]:
@@ -217,5 +224,12 @@ class TavilySearchClient(SearchProvider):
                 seen_urls.add(result["url"])
                 final_search_results.append(result)
             all_images.extend(query_images)
+
+        logger.info(  # ← add
+            "Search completed. queries=%d total_sources=%d total_images=%d",
+            len(cleaned_queries),
+            len(final_search_results),
+            len(all_images),
+        )
 
         return final_search_results, all_images

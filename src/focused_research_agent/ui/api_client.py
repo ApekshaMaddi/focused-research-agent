@@ -26,6 +26,7 @@ _REPORTS_ENDPOINT = "/api/v1/reports"
 
 _TIMEOUT_ERROR_MESSAGE = "Request timed out — research is taking too long."
 
+
 class ResearchCallResult(TypedDict):
     success: bool
     data: dict | None
@@ -280,6 +281,7 @@ def get_conversation(conversation_id: str) -> list[dict]:
 
     except httpx.TimeoutException:
         return []
+
 
 def get_reports() -> list[dict]:
     """

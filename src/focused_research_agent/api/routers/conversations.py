@@ -82,4 +82,5 @@ def get_reports(db: Annotated[Session, Depends(get_db)]) -> list[dict]:
             conversation_id, title, and created_at keys.
     """
     from focused_research_agent.database.repository import get_all_reports
+
     return get_all_reports(db)

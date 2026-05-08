@@ -1,7 +1,16 @@
+
+
+
+import logging
+
 from focused_research_agent.interfaces.search_interface import SearchProvider
 from focused_research_agent.state import ResearchState
 
+logger = logging.getLogger(__name__)
+
 _NUMBER_OF_IMAGES = 12
+
+
 def search_web(state: ResearchState, search_provider: SearchProvider) -> dict:
     """Search the web using the generated queries.
 
@@ -17,17 +26,28 @@ def search_web(state: ResearchState, search_provider: SearchProvider) -> dict:
         or an errors field if search fails.
     """
     queries = state.get("queries")
+    run_id = state.get("run_id", "unknown")
 
     if not isinstance(queries, list):
+        logger.error("search_web: queries must be a list. run_id=%s", run_id)
         return {"errors": ["search_web: queries must be a list"]}
 
     if not queries:
+        logger.error("search_web: No queries found. run_id=%s", run_id)
         return {"errors": ["search_web: No queries found"]}
 
     try:
         search_results, images = search_provider.search(queries)
     except Exception as e:
+        logger.error("search_web failed. run_id=%s error=%s", run_id, e)
         return {"errors": [f"search_web failed: {e}"]}
+
+    logger.info(
+        "Search completed. run_id=%s sources=%d images=%d",
+        run_id,
+        len(search_results),
+        len(images),
+    )
 
     return {
         "sources": search_results,

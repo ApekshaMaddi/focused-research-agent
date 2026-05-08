@@ -67,6 +67,8 @@ def execute_report(question: str, db: Session) -> dict:
     except ValueError as exc:
         raise ApplicationError(str(exc)) from exc
 
+    logger.info("Report use case started. question='%s'", user_query[:50])
+    
     initial_state = make_initial_state(user_query)
     initial_state["mode"] = "report"
 
@@ -81,4 +83,9 @@ def execute_report(question: str, db: Session) -> dict:
     except SQLAlchemyError:
         logger.exception("Failed to save report run to database")
 
+    logger.info(  # ← add
+        "Report use case completed. status=%s run_id=%s",
+        result.get("status"),
+        result.get("run_id"),
+    )
     return result

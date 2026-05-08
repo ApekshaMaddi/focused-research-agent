@@ -1,5 +1,8 @@
 from focused_research_agent.state import ResearchState
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def initialize_state(state: ResearchState) -> dict:
@@ -12,7 +15,12 @@ def initialize_state(state: ResearchState) -> dict:
     errors = []
 
     if not user_query:
+        logger.error("init_run: No question provided")
         errors.append("init_run: No question provided")
+    else:
+        logger.info(
+            "Research run started. run_id=%s question='%s'", run_id, user_query[:50]
+        )
 
     return {
         "run_id": run_id,

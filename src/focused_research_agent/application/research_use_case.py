@@ -9,7 +9,7 @@ Architecturally, the application layer contains use-case/business logic.
 It coordinates research execution while keeping terminal, HTTP, and other
 transport concerns out of the core execution path.
 """
-
+import logging
 from focused_research_agent.application.exceptions import ApplicationError
 from focused_research_agent.application.question_validation import (
     validate_and_clean_question,
@@ -17,6 +17,7 @@ from focused_research_agent.application.question_validation import (
 from focused_research_agent.graph import build_graph
 from focused_research_agent.state import ResearchState
 
+logger = logging.getLogger(__name__)
 
 def _is_list_of_strings(value: object) -> bool:
     """
@@ -153,8 +154,17 @@ def research_question(question: str) -> dict:
     except ValueError as exc:
         raise ApplicationError(str(exc)) from exc
 
+    logger.info("Research use case started. question='%s'", user_query[:50])
+    
     graph = build_graph()
     initial_state = make_initial_state(user_query)
     final_state = graph.invoke(initial_state)
 
-    return normalize_state(final_state, user_query)
+    result = normalize_state(final_state, user_query)
+
+    logger.info(
+        "Research use case completed. status=%s run_id=%s",
+        result.get("status"),
+        result.get("run_id"),
+    )
+    return result

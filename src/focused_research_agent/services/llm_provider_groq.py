@@ -166,6 +166,7 @@ class GroqLLMProvider(LLMProvider):
                 return recoverable valid JSON.
         """
         updated_prompt = self._build_json_only_prompt(prompt)
+        logger.info("Invoking Groq LLM with model: %s", self.llm_config["model"])
         response = self.llm.invoke(updated_prompt)
 
         raw_text = self._extract_text_from_content(response.content)
@@ -184,6 +185,7 @@ class GroqLLMProvider(LLMProvider):
         try:
             return json.loads(candidate)
         except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON from LLM: {e}\nRaw output:\n{candidate[:400]}")
             raise ValueError(
                 f"Invalid JSON from LLM: {e}\nRaw output:\n{candidate[:400]}"
             )

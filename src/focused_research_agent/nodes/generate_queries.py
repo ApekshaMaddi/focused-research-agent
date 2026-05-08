@@ -9,6 +9,9 @@ the user's research question.
 
 from focused_research_agent.interfaces.llm_interface import LLMProvider
 from focused_research_agent.state import ResearchState
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _build_generate_queries_prompt(state: ResearchState) -> str:
@@ -119,8 +122,12 @@ def generate_queries(state: ResearchState, llm_provider: LLMProvider) -> dict:
             status, or an errors field if generation fails.
     """
     base = (state.get("scope") or state.get("question") or "").strip()
+    run_id = state.get("run_id", "unknown")
 
     if not base:
+        logger.error(
+            "generate_queries: No scope or question available. run_id=%s", run_id
+        )
         return {"errors": ["generate_queries: No scope or question available"]}
 
     question_scope = _build_generate_queries_prompt(state)
@@ -128,6 +135,7 @@ def generate_queries(state: ResearchState, llm_provider: LLMProvider) -> dict:
     try:
         response = llm_provider.generate_json(question_scope)
     except Exception as e:
+        logger.error("generate_queries failed. run_id=%s error=%s", run_id, e)
         return {"errors": [f"generate_queries failed: {e}"]}
 
     if not isinstance(response, dict) or "queries" not in response:
@@ -138,8 +146,12 @@ def generate_queries(state: ResearchState, llm_provider: LLMProvider) -> dict:
     try:
         cleaned_list = _clean_generated_queries(llm_queries)
     except ValueError as e:
+        logger.warning(
+            "generate_queries: Query validation failed. run_id=%s error=%s", run_id, e
+        )
         return {"errors": [str(e)]}
 
+    logger.info("Queries generated. run_id=%s count=%d", run_id, len(cleaned_list))
     return {
         "queries": cleaned_list,
         "status": "planned",
