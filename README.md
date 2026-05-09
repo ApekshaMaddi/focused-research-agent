@@ -1,3 +1,12 @@
+---
+title: Focused Research Agent
+emoji: 🔍
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
 # 🔍 Focused Research Agent
 
 > An AI-powered research assistant that plans, searches, and synthesizes — so you get sourced answers, not hallucinations.
