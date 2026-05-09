@@ -13,22 +13,25 @@ RUN useradd -m -u 1000 appuser
 
 WORKDIR /app
 
-# Copy project files
-COPY --chown=appuser:appuser pyproject.toml .
-COPY --chown=appuser:appuser uv.lock .
-COPY --chown=appuser:appuser src/ src/
-COPY --chown=appuser:appuser start.sh .
+# Copy project files as root first
+COPY pyproject.toml .
+COPY uv.lock .
+COPY src/ src/
+COPY start.sh .
 
-# Switch to non-root user
+# Give appuser ownership of everything
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user BEFORE installing dependencies
 USER appuser
 
-# Install production dependencies only
+# Now uv sync runs as appuser — no permission issues
 RUN uv sync --frozen --no-dev
 
 # Make start script executable
 RUN chmod +x start.sh
 
-# Expose Streamlit port — Hugging Face Spaces uses 7860
+# Expose Streamlit port
 EXPOSE 7860
 
 CMD ["./start.sh"]
