@@ -8,10 +8,20 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: true
+
+      - name: Debug — verify token exists
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "ERROR: HF_TOKEN is empty or not set"
+            exit 1
+          else
+            echo "HF_TOKEN is set (length: ${#HF_TOKEN})"
+          fi
 
       - name: Push to Hugging Face Hub
         env:
@@ -20,4 +30,4 @@ jobs:
           git config user.email "tusharkhoche@users.noreply.github.com"
           git config user.name "tusharkhoche"
           git remote add hf https://tusharkhoche:${HF_TOKEN}@huggingface.co/spaces/tusharkhoche/focused-research-agent
-          git push hf master:main --force
+          git push hf master:main --force 2>&1 || echo "Push failed with exit code $?"
