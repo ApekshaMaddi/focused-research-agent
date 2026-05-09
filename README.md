@@ -2,17 +2,11 @@
 
 > An AI-powered research assistant that plans, searches, and synthesizes — so you get sourced answers, not hallucinations.
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=coverage)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.4-green.svg)](https://langchain-ai.github.io/langgraph/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
-
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=coverage)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=bugs)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
-[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=alert_status&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=coverage&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
 ---
 
 ## 🚀 Live Demo
@@ -404,14 +398,15 @@ Only `repository.py` touches SQLAlchemy. Switching from SQLite to PostgreSQL is 
 
 ## 📈 Code Quality
 
-| Metric | Value |
-|---|---|
-| Tests | **175 passing** |
-| Sonar Quality Gate | ✅ Passing |
-| Code duplications | 0.0% |
-| Security hotspots | 0 |
+| Metric             | Value |
+|--------------------|---|
+| Tests              | **175 passing** |
+| Sonar Quality Gate | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=alert_status&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent) |
+| Code duplications  | [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=duplicated_lines_density&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent) |
+| Maintainability    | [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=sqale_rating&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent) |
+| Bugs               | [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=bugs&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent) |
+| Reliability        | [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=reliability_rating&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)|
 
-| Sonar Dashboard | [View full report →](https://sonarcloud.io/summary/overall?id=tusharkhoche_focused-research-agent) |
 ---
 
 ## 🗺️ Roadmap
