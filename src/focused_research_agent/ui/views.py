@@ -140,10 +140,6 @@ def render_sources(sources: list[dict], images: list[str] | None = None) -> None
     Returns:
         None
     """
-    st.subheader("📚 Sources")
-    if not sources:
-        st.info("No sources available.")
-        return
 
     if images:
         st.subheader("🖼️ Images")
@@ -154,6 +150,12 @@ def render_sources(sources: list[dict], images: list[str] | None = None) -> None
                     st.image(url, use_container_width=True)
                 except Exception:
                     pass
+
+
+    st.subheader("📚 Sources")
+    if not sources:
+        st.info("No sources available.")
+        return
 
     for source in sources:
         with st.expander(source["title"]):
