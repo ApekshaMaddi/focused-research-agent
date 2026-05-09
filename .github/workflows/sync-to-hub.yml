@@ -13,9 +13,9 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Push to Hub
-        uses: huggingface/hub-sync@v1
-        with:
-          github_repo_id: tusharkhoche/focused-research-agent
-          huggingface_repo_id: tusharkhoche/focused-research-agent
-          hf_token: ${{ secrets.HF_TOKEN }}
+      - name: Push to Hugging Face Hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git remote add hf https://tusharkhoche:$HF_TOKEN@huggingface.co/spaces/tusharkhoche/focused-research-agent
+          git push hf master:main --force
