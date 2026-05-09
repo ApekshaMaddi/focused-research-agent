@@ -3,12 +3,15 @@
 > An AI-powered research assistant that plans, searches, and synthesizes — so you get sourced answers, not hallucinations.
 
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.4-green.svg)](https://langchain-ai.github.io/langgraph/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=alert_status&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=coverage&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
----
-
+[![LangGraph](https://img.shields.io/badge/LangGraph-1.0.10-green.svg)](https://langchain-ai.github.io/langgraph/)
+[![LangChain](https://img.shields.io/badge/LangChain-1.2.10-1C3C3C.svg)](https://python.langchain.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.135.3-009688.svg)](https://fastapi.tiangolo.com)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.52.2-FF4B4B.svg)](https://streamlit.io)
+[![SQLite](https://img.shields.io/badge/SQLite-SQLAlchemy_2.0-003B57.svg)](https://www.sqlalchemy.org)
+[![Groq](https://img.shields.io/badge/Groq-Llama_3.3_70B-orange.svg)](https://console.groq.com)
+[![Tavily](https://img.shields.io/badge/Tavily-0.7.22-purple.svg)](https://tavily.com)
+[![Ollama](https://img.shields.io/badge/Ollama-0.6.2-black.svg)](https://ollama.com)
+[![uv](https://img.shields.io/badge/uv-package_manager-DE5FE9.svg)](https://docs.astral.sh/uv/)
 ## 🚀 Live Demo
 
 **[Try it here → your-demo-url-here](https://your-demo-url-here)**
