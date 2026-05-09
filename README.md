@@ -1,33 +1,69 @@
 # 🔍 Focused Research Agent
 
-An AI-powered research assistant built with **LangGraph**, **FastAPI**, and **Streamlit**. Given a question, the agent clarifies scope, plans targeted web searches, gathers sources, synthesizes a structured answer, and presents it through a clean web UI.
+> An AI-powered research assistant that plans, searches, and synthesizes — so you get sourced answers, not hallucinations.
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=coverage)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-0.4-green.svg)](https://langchain-ai.github.io/langgraph/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=coverage)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=bugs)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)
+---
+
+## 🚀 Live Demo
+
+**[Try it here → your-demo-url-here](https://your-demo-url-here)**
+
+No installation required. Ask a research question and watch the agent work.
 
 ---
 
-## 🎯 What This Project Does
+## 🎯 What This Does
 
-The agent automates a structured research workflow — the same steps a human researcher would follow, but executed by an LLM-orchestrated pipeline:
+Most LLM apps just wrap a prompt. This one builds a full research pipeline.
+
+Given any question, the agent:
 
 ```
-User Question
-    → Scope clarification (LLM)
-    → Query planning (LLM)
-    → Web search (Tavily)
-    → Answer synthesis with citations (LLM)
-    → Structured result returned to UI
+Your Question
+    ↓
+Scope Clarification     — LLM interprets your question with context
+    ↓
+Query Planning          — LLM generates 3-6 targeted search queries
+    ↓
+Web Search              — Tavily fetches live sources + images
+    ↓
+Source Ranking          — Domain trust heuristic ranks results
+    ↓
+Answer Synthesis        — LLM synthesizes a cited, sourced answer
+    ↓
+Structured Result       — Answer + citations + sources + images
 ```
+
+Three modes available:
+
+| Mode | What it does |
+|---|---|
+| **Quick Research** | Concise answer with 1-3 citations in ~15 seconds |
+| **Conversational Chat** | Multi-turn research with conversation memory |
+| **Full Report** | Structured 4-section report with deeper search and images |
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture
 
-The project is built in three distinct layers, each with a single responsibility:
+Six layers, each with one responsibility:
 
 ```
 ┌─────────────────────────────────────────────────┐
 │  UI Layer (Streamlit)                           │
-│  app.py · api_client.py · views.py              │
-│  Thin client — calls FastAPI over HTTP          │
+│  Home · Research · Chat · Report                │
+│  Thin client — calls FastAPI over HTTP only     │
 └─────────────────────┬───────────────────────────┘
                       │ HTTP
 ┌─────────────────────▼───────────────────────────┐
@@ -38,69 +74,77 @@ The project is built in three distinct layers, each with a single responsibility
                       │ Function call
 ┌─────────────────────▼───────────────────────────┐
 │  Application Layer                              │
-│  Research use case · Input validation           │
-│  State normalization                            │
+│  Research · Chat · Report use cases             │
+│  Input validation · State normalization         │
 └─────────────────────┬───────────────────────────┘
                       │ Graph invocation
 ┌─────────────────────▼───────────────────────────┐
 │  Graph Layer (LangGraph)                        │
-│  init_run → scope_question → generate_queries   │
-│  → search_web → synthesize_answer → finalize    │
+│  init_run → scope → queries → search            │
+│  → synthesize → finalize · handle_error         │
 └─────────────────────┬───────────────────────────┘
                       │
         ┌─────────────┴─────────────┐
         ▼                           ▼
   LLM Provider                Search Provider
-  (Groq / Llama)               (Tavily)
+  (Groq · Ollama)              (Tavily)
+        │                           │
+        └─────────────┬─────────────┘
+                      ▼
+┌─────────────────────────────────────────────────┐
+│  Database Layer (SQLite / PostgreSQL)           │
+│  Repository Pattern · Conversation history     │
+│  Report history · Image persistence            │
+└─────────────────────────────────────────────────┘
 ```
 
-### Why this architecture?
-
-Each layer has one job and knows nothing about the layers above it. The LangGraph nodes know nothing about HTTP. The FastAPI routers know nothing about LangGraph. The Streamlit UI knows nothing about the graph. This makes each layer independently testable and replaceable.
+Each layer knows only about the layer immediately below it. The LangGraph nodes know nothing about HTTP. The FastAPI routers know nothing about LangGraph. The Streamlit UI knows nothing about the graph.
 
 ---
 
 ## 🧠 LangGraph Workflow
 
-The graph below shows the compiled LangGraph workflow. Each box is a node — a discrete step in the research pipeline. The solid arrows are the happy path. The dashed arrows are the error routing paths.
+The research pipeline is a directed graph with explicit state and conditional error routing.
 
-![LangGraph Workflow](src/focused_research_agent/tools/diagrams/graph.png)
+![LangGraph Workflow](docs/images/graph.png)
 
-### What each node does
+### Nodes
 
-| Node | Responsibility |
+| Node | What it does |
 |---|---|
-| `init_run` | Generates a unique run ID and validates that a question was provided |
-| `scope_question` | Sends the question to the LLM to produce a focused scope, assumptions, and constraints |
-| `generate_queries` | Sends the scope to the LLM to produce 3–6 targeted web search queries |
-| `search_web` | Executes all queries through Tavily and collects deduplicated, normalized sources |
-| `synthesize_answer` | Sends the top-ranked sources to the LLM to produce a concise answer with citations |
-| `finalize_run` | Marks the run as `completed` if an answer exists and no errors occurred, otherwise `error` |
-| `handle_error` | Terminal error node — logs all recorded errors and marks the run as `error` |
+| `init_run` | Generates a unique run ID, validates question present |
+| `scope_question` | LLM produces scope, assumptions, and constraints |
+| `generate_queries` | LLM produces 3-6 targeted search queries |
+| `search_web` | Tavily executes all queries, deduplicates sources, collects images |
+| `synthesize_answer` | Ranks sources by domain trust, LLM synthesizes answer with citations |
+| `finalize_run` | Marks run as `completed` or `error` |
+| `handle_error` | Terminal error node — logs all errors, sets status to `error` |
 
-### How error routing works
+### Error Routing
 
-Every node is followed by a conditional edge that calls `route_after_node(state)`. This function checks whether `state["errors"]` contains any entries. If errors exist, the graph routes to `handle_error`. If not, it continues to the next node.
+Every node is followed by a conditional edge that checks `state["errors"]`. If errors exist → route to `handle_error`. If not → continue.
 
-This means errors are never silently swallowed and exceptions never bubble up through the graph. A node that encounters a problem records it in `state["errors"]` and returns — the routing logic handles the rest. The graph always terminates cleanly at `__end__`, regardless of which path was taken.
+Nodes **never raise exceptions**. They record errors in state and return. The graph always terminates cleanly at `__end__`.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Technology | Role | Why chosen |
+| Technology | Role | Why |
 |---|---|---|
-| **LangGraph** | Workflow orchestration | Deterministic, reproducible agent behaviour with explicit state |
-| **Groq + Llama** | LLM provider | Fast inference, free tier for development |
-| **Tavily** | Web search | Purpose-built for AI agents, returns structured results |
-| **FastAPI** | REST API backend | Modern Python API framework with built-in validation |
-| **Pydantic** | Request/response validation | Shared validation logic between API and application layer |
-| **Streamlit** | Web UI | Rapid UI development for AI applications |
-| **httpx** | HTTP client | Modern Python HTTP client used in the UI layer |
+| **LangGraph** | Workflow orchestration | Deterministic, reproducible graph with explicit state |
+| **FastAPI** | REST API backend | Modern Python with built-in validation and DI |
+| **Pydantic** | Request/response validation | Shared validation between API and application layers |
+| **Groq + Llama** | LLM provider | Fast inference, generous free tier |
+| **Ollama** | Alternative LLM provider | Local or cloud, no API key required |
+| **Tavily** | Web search | Purpose-built for AI agents, returns structured results + images |
+| **SQLAlchemy** | ORM | One-line switch from SQLite to PostgreSQL |
+| **Streamlit** | Web UI | Rapid AI application development |
+| **httpx** | HTTP client | Modern Python HTTP client |
 | **uv** | Package management | Fast, modern Python package manager |
-| **pytest** | Testing | Industry standard Python testing framework |
+| **pytest** | Testing | 175 tests across multiple strategies |
 | **Ruff** | Linting and formatting | Fast, modern Python linter |
-| **SonarCloud** | Code quality gate | Continuous inspection of code quality and coverage |
+| **SonarCloud** | Code quality gate | Continuous coverage and quality inspection |
 
 ---
 
@@ -110,30 +154,33 @@ This means errors are never silently swallowed and exceptions never bubble up th
 focused-research-agent/
 ├── src/
 │   └── focused_research_agent/
-│       ├── api/                        # FastAPI transport layer
+│       ├── api/                            # FastAPI transport layer
 │       │   ├── routers/
-│       │   │   ├── health.py           # GET /health
-│       │   │   ├── research.py         # POST /api/v1/research
-│       │   │   └── v1.py               # Versioned router grouping
-│       │   ├── schemas/research/
-│       │   │   └── research.py         # Request/response Pydantic models
-│       │   ├── api_exception_handlers.py  # Centralized error handling
-│       │   ├── app.py                  # FastAPI app factory
-│       │   └── dependencies.py         # Dependency injection wiring
-│       ├── application/                # Use-case / business logic layer
-│       │   ├── exceptions.py           # ApplicationError (transport-neutral)
-│       │   ├── question_validation.py  # Shared validation (API + app layer)
-│       │   └── research_use_case.py    # Core research orchestration
-│       ├── config/                     # Configuration layer
-│       │   ├── api_config.py           # FastAPI settings dataclass
-│       │   ├── llm_config.py           # LLM provider settings
-│       │   ├── logger_config.py        # Rotating file logger
-│       │   ├── search_config.py        # Search provider settings
-│       │   └── ui_config.py            # Streamlit UI settings
-│       ├── interfaces/                 # Abstract provider contracts
-│       │   ├── llm_interface.py        # LLMProvider ABC
-│       │   └── search_interface.py     # SearchProvider ABC + SearchResult
-│       ├── nodes/                      # LangGraph node functions
+│       │   │   ├── health.py               # GET /health
+│       │   │   ├── research.py             # POST /api/v1/research
+│       │   │   ├── chat.py                 # POST /api/v1/chat
+│       │   │   ├── report.py               # POST /api/v1/report
+│       │   │   ├── conversations.py        # GET /api/v1/conversations + /reports
+│       │   │   └── v1.py                   # Versioned router grouping
+│       │   ├── schemas/                    # Pydantic request/response models
+│       │   ├── api_exception_handlers.py   # Centralized 400/500 handling
+│       │   ├── app.py                      # FastAPI app factory
+│       │   └── dependencies.py             # Dependency injection wiring
+│       ├── application/                    # Use-case / business logic layer
+│       │   ├── exceptions.py               # ApplicationError
+│       │   ├── question_validation.py      # Shared validation (API + app layer)
+│       │   ├── research_use_case.py        # Single-turn research
+│       │   ├── chat_use_case.py            # Multi-turn conversation
+│       │   └── report_use_case.py          # Deep research report
+│       ├── config/                         # Configuration layer
+│       ├── database/                       # Database layer
+│       │   ├── models.py                   # ConversationRun SQLAlchemy model
+│       │   ├── database.py                 # Engine and session factory
+│       │   └── repository.py               # Repository Pattern — only file touching SQLAlchemy
+│       ├── interfaces/                     # Abstract provider contracts
+│       │   ├── llm_interface.py            # LLMProvider ABC
+│       │   └── search_interface.py         # SearchProvider ABC + SearchResult
+│       ├── nodes/                          # LangGraph node functions
 │       │   ├── init_run.py
 │       │   ├── scope_question.py
 │       │   ├── generate_queries.py
@@ -141,32 +188,25 @@ focused-research-agent/
 │       │   ├── synthesize_answer.py
 │       │   ├── finalize_run.py
 │       │   └── handle_error.py
-│       ├── services/                   # External provider implementations
+│       ├── services/                       # External provider implementations
 │       │   ├── llm_factory.py
-│       │   ├── llm_provider_groq.py    # Groq implementation
+│       │   ├── llm_provider_groq.py
+│       │   ├── llm_provider_ollama.py
 │       │   ├── search_factory.py
-│       │   └── search_provider_tavily.py  # Tavily implementation
-│       ├── ui/                         # Streamlit UI transport layer
-│       │   ├── api_client.py           # HTTP client (httpx, no Streamlit)
-│       │   ├── app.py                  # Streamlit entrypoint
-│       │   ├── exceptions.py           # UI-specific exceptions
-│       │   └── views.py                # Rendering functions (no httpx)
-│       ├── cli.py                      # CLI transport layer
-│       ├── graph.py                    # LangGraph graph builder
-│       └── state.py                    # ResearchState TypedDict
-├── tests/                              # All tests live here, not in src/
-│   ├── test_api_health.py
-│   ├── test_api_research.py
-│   ├── test_cli_helpers.py
-│   ├── test_config_and_factories.py
-│   ├── test_graph_error_paths.py
-│   ├── test_nodes_smoke.py
-│   ├── test_nodes_unit.py
-│   ├── test_providers_unit.py
-│   ├── test_research_use_case.py
-│   └── test_ui_api_client.py
+│       │   └── search_provider_tavily.py
+│       ├── ui/                             # Streamlit UI
+│       │   ├── Home.py
+│       │   ├── api_client.py               # HTTP client (no Streamlit code)
+│       │   ├── views.py                    # Rendering functions (no HTTP code)
+│       │   └── pages/
+│       │       ├── 1_🔍_Research.py
+│       │       ├── 2_💬_Chat.py
+│       │       └── 3_📄_Report.py
+│       ├── cli.py
+│       ├── graph.py                        # LangGraph graph builder
+│       └── state.py                        # ResearchState TypedDict
+├── tests/                                  # 175 tests
 ├── docs/
-├── logs/
 ├── .env.example
 ├── pyproject.toml
 └── README.md
@@ -180,8 +220,8 @@ focused-research-agent/
 
 - Python 3.13
 - [uv](https://docs.astral.sh/uv/) package manager
-- Groq API key — [console.groq.com](https://console.groq.com)
-- Tavily API key — [tavily.com](https://tavily.com)
+- Groq API key — [console.groq.com](https://console.groq.com) (free tier)
+- Tavily API key — [tavily.com](https://tavily.com) (free tier)
 
 ### 1. Clone the repository
 
@@ -202,37 +242,49 @@ uv sync
 cp .env.example .env
 ```
 
-Edit `.env` and fill in your API keys:
+Edit `.env` with your API keys:
 
 ```env
-# LLM Settings
+# LLM Configuration — Groq (recommended)
 LLM_PROVIDER=groq
 LLM_MODEL=llama-3.3-70b-versatile
+LLM_API_KEY=your_groq_api_key_here
 LLM_TEMPERATURE=0.0
 LLM_MAX_RETRIES=2
-LLM_API_KEY=your_groq_api_key_here
+LLM_MAX_TOKENS=2048
 
-# Search Settings
+# Ollama cloud alternative (comment above, uncomment below)
+# LLM_PROVIDER=ollama
+# LLM_MODEL=gpt-oss:20b-cloud
+# LLM_API_KEY=your_ollama_api_key_here
+
+# Ollama Local alternative (no API key)
+#LLM_PROVIDER=ollama
+#LLM_MODEL=llama3.2:3b
+#LLM_API_KEY=not-needed
+
+# Search Configuration
 SEARCH_PROVIDER=tavily
 SEARCH_API_KEY=your_tavily_api_key_here
 SEARCH_MAX_RESULTS=5
 SEARCH_DEPTH=basic
 
-# API Settings
+# API Configuration
 API_TITLE=Focused Research Agent API
 API_VERSION=1.0.0
 API_DEBUG=false
 
-# UI Settings
+# UI Configuration
 UI_API_BASE_URL=http://localhost:8000
 UI_REQUEST_TIMEOUT=120
+
+# Database
+DATABASE_URL=sqlite:///./research_agent.db
 ```
 
 ---
 
 ## 🚀 Running the Project
-
-The project has three ways to run — CLI, API only, or full stack (API + UI).
 
 ### Option 1 — CLI
 
@@ -240,93 +292,92 @@ The project has three ways to run — CLI, API only, or full stack (API + UI).
 uv run focused-research-agent "What are the latest advances in quantum computing?"
 ```
 
-Or interactive mode:
-
-```bash
-uv run focused-research-agent
-```
-
-### Option 2 — FastAPI backend only
+### Option 2 — FastAPI only
 
 ```bash
 uv run uvicorn --factory focused_research_agent.api.app:create_app --reload
 ```
 
-API docs available at: `http://localhost:8000/docs`
+API docs at `http://localhost:8000/docs`
 
 ### Option 3 — Full stack (recommended)
 
-Open two terminals:
-
 ```bash
-# Terminal 1 — start the backend
+# Terminal 1 — backend
 uv run uvicorn --factory focused_research_agent.api.app:create_app --reload
 
-# Terminal 2 — start the UI
-uv run streamlit run src/focused_research_agent/ui/1_🔍_Research.py
+# Terminal 2 — UI
+uv run streamlit run src/focused_research_agent/ui/Home.py
 ```
 
-UI available at: `http://localhost:8501`
+UI at `http://localhost:8501`
 
 ---
 
-## 🧪 Running Tests
+## 🧪 Testing
 
 ```bash
-# Run all tests
+# Run all 175 tests
 uv run pytest -v
 
-# Run with coverage report
+# With coverage report
 uv run pytest --cov=src/focused_research_agent --cov-report=term-missing -v
-
-# Run a specific test file
-uv run pytest tests/test_api_research.py -v
 ```
+
+### Test strategy
+
+| Test file | Strategy |
+|---|---|
+| `test_nodes_unit.py` | Each node isolated with fake providers |
+| `test_nodes_smoke.py` | Full graph end-to-end with fake providers |
+| `test_graph_error_paths.py` | Conditional routing with empty question |
+| `test_providers_unit.py` | Groq, Ollama, Tavily with fake SDK clients |
+| `test_api_*.py` | FastAPI TestClient + dependency_overrides |
+| `test_database_repository.py` | In-memory SQLite |
+| `test_*_use_case.py` | Fake graph + in-memory SQLite |
+| `test_ui_api_client.py` | Fake httpx module |
 
 ---
 
 ## 📊 API Reference
 
-### Health Check
+### Endpoints
 
 ```
-GET /health
-
-Response 200:
-{
-    "status": "ok"
-}
-```
-
-### Research Endpoint
-
-```
+GET  /health
 POST /api/v1/research
+POST /api/v1/chat
+POST /api/v1/report
+GET  /api/v1/conversations
+GET  /api/v1/conversations/{id}
+GET  /api/v1/reports
+```
 
-Request:
+### Response shape
+
+```json
 {
-    "question": "What are the latest advances in quantum computing?"
+  "run_id": "uuid",
+  "question": "string",
+  "status": "completed | error",
+  "scope": "string | null",
+  "queries": ["string"] | null,
+  "sources": [{"title": "...", "url": "...", "snippet": "...", "score": 0.95}] | null,
+  "answer": "string | null",
+  "citations": ["url"] | null,
+  "images": ["url"] | null,
+  "errors": ["string"]
 }
+```
 
-Response 200:
-{
-    "run_id": "abc-123",
-    "question": "What are the latest advances in quantum computing?",
-    "status": "completed",
-    "scope": "Explain the latest advances in quantum computing...",
-    "queries": ["recent quantum computing breakthroughs", ...],
-    "sources": [{"title": "...", "url": "...", "snippet": "...", "score": 0.95}],
-    "answer": "The latest advances include...",
-    "citations": ["https://..."],
-    "errors": []
-}
+### Error shape
 
-Error responses follow a consistent shape:
+```json
 {
-    "status_code": 400,
-    "error": "application_error",
-    "detail": "Human readable message",
-    "path": "/api/v1/research"
+  "status_code": 400,
+  "error": "application_error",
+  "detail": "Human readable message",
+  "path": "/api/v1/research"
 }
 ```
 
@@ -335,19 +386,19 @@ Error responses follow a consistent shape:
 ## 🎨 Key Design Decisions
 
 **Function-based nodes, class-based providers**
-LangGraph nodes are pure functions — they take state in and return partial state updates. Providers (Groq, Tavily) are classes because they hold client configuration and connection state that must persist across calls.
+Nodes are pure stateless transformations. Providers hold client state. The distinction is applied consistently across the entire codebase.
 
-**State-based error routing over exceptions**
-Nodes record errors in `state["errors"]` rather than raising exceptions. A conditional edge after each node checks for errors and routes to `handle_error`. This keeps the graph deterministic and makes error paths explicit in the graph diagram.
+**State-based error routing**
+Nodes record errors in `state["errors"]` — never raise exceptions. The graph always terminates cleanly. Error paths are visible in the graph diagram.
 
-**Shared validation across transports**
-`validate_and_clean_question` is used by both the Pydantic request schema (`AfterValidator`) and the application layer. It raises `ValueError` so Pydantic can use it directly. The application layer catches `ValueError` and re-raises as `ApplicationError` — one function, correct behaviour in both transport contexts.
+**Provider abstraction**
+Swapping LLM providers requires one environment variable change and zero application code changes. Proven by switching between Groq and Ollama during development.
 
-**Streamlit as a thin client**
-The Streamlit UI never imports LangGraph, FastAPI, or any research logic. It only calls the FastAPI backend over HTTP via `api_client.py`. This means the UI can be deployed independently and the backend can be tested without a browser.
+**Repository Pattern**
+Only `repository.py` touches SQLAlchemy. Switching from SQLite to PostgreSQL is one line in `.env`.
 
-**True factory startup**
-`create_app()` is called at startup, not at import time. This allows proper dependency wiring and makes the app fully testable via `dependency_overrides`.
+**Shared validation**
+`validate_and_clean_question` runs in both Pydantic schemas and application layer use cases. One function, consistent behaviour at every boundary.
 
 ---
 
@@ -355,31 +406,63 @@ The Streamlit UI never imports LangGraph, FastAPI, or any research logic. It onl
 
 | Metric | Value |
 |---|---|
-| Test coverage | 78% overall, 100% on new code |
-| Tests | 67 passing |
-| Duplications | 0.0% |
-| Security hotspots | 0 |
+| Tests | **175 passing** |
 | Sonar Quality Gate | ✅ Passing |
+| Code duplications | 0.0% |
+| Security hotspots | 0 |
 
+| Sonar Dashboard | [View full report →](https://sonarcloud.io/summary/overall?id=tusharkhoche_focused-research-agent) |
 ---
 
 ## 🗺️ Roadmap
 
-- [x] Phase 1 — Core LangGraph workflow
-- [x] Phase 1 — FastAPI backend with versioned routing
-- [x] Phase 2A — Streamlit UI (single-turn research)
-- [x] Phase 2B — UX polish (metrics, debug panel, dividers)
-- [ ] Phase 3 — Conversation history with SQLite persistence
-- [ ] Phase 4 — Full report generation mode
-- [ ] Phase 5 — Mode-aware agent (quick answer vs full report)
-- [ ] Phase 6 — Multimodal results (images from sources)
+- [x] Phase 1 — Core LangGraph workflow + FastAPI backend
+- [x] Phase 2 — Streamlit UI + UX polish
+- [x] Phase 3 — Conversational research with SQLite persistence
+- [x] Phase 4 — Full structured report generation mode
+- [x] Phase 5 — Image rendering from Tavily search results
+
+**Potential next steps:**
+- Async FastAPI endpoints for non-blocking long runs
+- PostgreSQL for multi-user production deployment
+- Task queue (Celery + Redis) for report generation
+- Authentication middleware
+- Rate limiting
+- Reflection loop — agent re-searches if initial results are insufficient
+
+---
+
+## 🔌 Switching LLM Providers
+
+```bash
+# Groq (fast, free tier)
+LLM_PROVIDER=groq
+LLM_MODEL=llama-3.3-70b-versatile
+
+# Ollama Cloud
+LLM_PROVIDER=ollama
+LLM_MODEL=gpt-oss:20b-cloud
+
+# Ollama Local (no API key)
+LLM_PROVIDER=ollama
+LLM_MODEL=llama3.2:3b
+LLM_API_KEY=not-needed
+```
+
+Zero application code changes. The provider abstraction handles everything.
 
 ---
 
 ## 👤 Author
 
-**Tushar** — transitioning from software testing to AI development.
+**Tushar Khoche**
 
-Built this project to demonstrate production-grade AI system design with LangGraph, FastAPI, and modern Python engineering practices.
+Software testing professional transitioning to AI development. Built this project to demonstrate production-grade AI system design with LangGraph, FastAPI, and modern Python engineering practices.
 
-[LinkedIn](https://linkedin.com/in/your-profile) · [GitHub](https://github.com/tusharkhoche)
+[LinkedIn](https://linkedin.com/in/tusharkhoche) · [GitHub](https://github.com/tusharkhoche)
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE) for details.
