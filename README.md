@@ -25,8 +25,6 @@ pinned: false
 
 ## 🚀 Live Demo
 
-## 🚀 Live Demo
-
 **[Try it here → https://tushark2111-focused-research-agent.hf.space](https://tushark2111-focused-research-agent.hf.space)**
 
 No installation required. Ask a research question and watch the agent work.
@@ -424,6 +422,72 @@ Only `repository.py` touches SQLAlchemy. Switching from SQLite to PostgreSQL is 
 | Reliability        | [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=tusharkhoche_focused-research-agent&metric=reliability_rating&token=718dd7470a62c68bd770e36c666f393d1c3d5fe1)](https://sonarcloud.io/summary/new_code?id=tusharkhoche_focused-research-agent)|
 
 ---
+
+## 🏭 Production Grade — Honest Assessment
+
+### What is production-grade in this project
+
+**Reliability** ✅
+- State-based error routing — graph never crashes, always terminates cleanly
+- `handle_error` node catches all failure paths
+- Non-blocking persistence — database failure never kills the research result
+- Input validation at every boundary
+
+**Observability** ✅
+- Structured logging with `run_id` on every log line — full run traceability
+- Log levels applied correctly — DEBUG for reads, INFO for flow, WARNING for recoverable issues, ERROR for failures
+- Rotating file logger configured
+- SonarCloud quality gate in CI
+
+**Maintainability** ✅
+- Six distinct layers, each with one responsibility
+- Repository Pattern — database logic isolated to one file
+- Provider abstraction — swap LLM or search provider with one environment variable
+- 175 tests with meaningful coverage
+- Module docstrings on every file
+- Ruff formatting and linting enforced
+
+**Automated Testing** ✅
+- Unit, integration, API, smoke, and graph error path tests
+- In-memory SQLite for test isolation
+- SonarCloud coverage gate
+
+---
+
+### What is genuinely missing for true production grade
+
+**Security** ❌
+- No authentication on API endpoints
+- No rate limiting — Groq/Tavily quota could be exhausted by a single caller
+- No HTTPS enforcement
+- API keys would need to move to a secrets manager (AWS Secrets Manager, Azure Key Vault)
+
+**Scalability** ⚠️
+- SQLite is single-writer — PostgreSQL needed for concurrent users (one line change in `.env`)
+- Synchronous FastAPI endpoints block worker threads during long research runs — a task queue (Celery + Redis) would be needed
+- No caching — the same question hits Tavily and Groq on every request
+
+**Monitoring** ⚠️
+- No distributed tracing (OpenTelemetry)
+- No metrics dashboard (Prometheus, Grafana)
+- No alerting on provider failures
+- Logs go to a rotating file — in production these would go to a log aggregation system (Datadog, CloudWatch, ELK)
+
+**Reliability** ⚠️
+- No retry logic for Tavily failures
+- No circuit breaker for provider outages
+- No graceful shutdown for in-flight research runs
+
+---
+
+### The honest summary
+
+> The architecture is production-grade in structure — clean separation of concerns, repository pattern, provider abstraction, dependency injection, comprehensive testing. The gaps are in operational concerns — authentication, rate limiting, async endpoints, distributed tracing, and a task queue for long-running operations. If deploying this for real users, those would be the next six things to build.
+
+---
+
+
+
 
 ## 🗺️ Roadmap
 
