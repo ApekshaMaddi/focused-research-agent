@@ -595,3 +595,12 @@ def test_save_run_handles_none_images(db, sample_state):
     turns = get_conversation_turns(db, "conv-no-img")
 
     assert turns[0]["images"] is None
+
+def test_get_all_conversations_excludes_report_runs(db, sample_state):
+    save_run(db, sample_state, conversation_id="conv-chat", turn_number=1, mode="research")
+    save_run(db, sample_state, conversation_id="conv-report", turn_number=1, mode="report")
+
+    result = get_all_conversations(db)
+
+    assert len(result) == 1
+    assert result[0]["conversation_id"] == "conv-chat"
