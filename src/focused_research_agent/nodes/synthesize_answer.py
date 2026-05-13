@@ -434,14 +434,14 @@ def synthesize_answer(state: ResearchState, llm_provider: LLMProvider) -> dict:
     try:
         response = llm_provider.generate_json(prompt)
     except Exception as e:
-        logger.error("synthesize_answer failed. run_id=%s error=%s", run_id, e)
+        logger.exception("synthesize_answer failed. run_id=%s error=%s", run_id, e)
         return {"errors": [f"synthesize_answer failed: {e}"]}
 
     try:
         answer, citations = _validate_synthesis_response(response)
         cleaned_citations = _clean_citations(citations, allowed_urls)
     except ValueError as e:
-        logger.error(
+        logger.exception(
             "synthesize_answer: Validation failed. run_id=%s error=%s", run_id, e
         )
         return {"errors": [str(e)]}

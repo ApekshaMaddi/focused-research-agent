@@ -54,7 +54,7 @@ def scope_question(state: ResearchState, llm_provider: LLMProvider) -> dict:
     try:
         response = llm_provider.generate_json(question_scope)
     except Exception as e:
-        logger.error("scope_question failed. run_id=%s error=%s", run_id, e)
+        logger.exception("scope_question failed. run_id=%s error=%s", run_id, e)
         return {"errors": [f"scope_question failed: {e}"]}
 
     if not isinstance(response, dict):

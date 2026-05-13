@@ -207,7 +207,7 @@ def main() -> None:
 
     except ApplicationError as e:
         print(format_error_output(str(e)))
-        logger.error(str(e))
+        logger.exception("ApplicationError occurred: %s", e)
 
     except Exception as e:
         print(format_error_output(f"Unexpected internal error occurred: {e}"))
