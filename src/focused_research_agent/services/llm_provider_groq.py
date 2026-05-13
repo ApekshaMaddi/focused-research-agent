@@ -197,7 +197,7 @@ class GroqLLMProvider(LLMProvider):
         try:
             return json.loads(text)
         except json.JSONDecodeError as e:
-            logger.error("Invalid JSON from LLM: %s", e)
+            logger.exception("Invalid JSON from LLM: %s", e)
 
         candidate = self._extract_json_candidate(text)
 
@@ -207,7 +207,7 @@ class GroqLLMProvider(LLMProvider):
         try:
             return json.loads(candidate)
         except json.JSONDecodeError as e:
-            logger.error(
+            logger.exception(
                 "Invalid JSON from LLM: %s\nRaw output:\n%s", e, candidate[:400]
             )
             raise ValueError(

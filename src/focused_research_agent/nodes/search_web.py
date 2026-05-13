@@ -52,7 +52,7 @@ def search_web(state: ResearchState, search_provider: SearchProvider) -> dict:
     try:
         search_results, images = search_provider.search(queries)
     except Exception as e:
-        logger.error("search_web failed. run_id=%s error=%s", run_id, e)
+        logger.exception("search_web failed. run_id=%s error=%s", run_id, e)
         return {"errors": [f"search_web failed: {e}"]}
 
     logger.info(
