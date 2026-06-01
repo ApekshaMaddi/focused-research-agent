@@ -532,7 +532,7 @@ Zero application code changes. The provider abstraction handles everything.
 
 **Tushar Khoche**
 
-Software testing professional transitioning to AI development. Built this project to demonstrate production-grade AI system design with LangGraph, FastAPI, and modern Python engineering practices.
+AI/ML Developer with a background in software engineering and test automation. Built this project to demonstrate production-grade AI system design — clean architecture, provider abstraction, state-based error routing, and comprehensive test coverage across a 6-layer LangGraph + FastAPI + Streamlit stack.
 
 [LinkedIn](https://linkedin.com/in/tusharkhoche) · [GitHub](https://github.com/tusharkhoche)
 
