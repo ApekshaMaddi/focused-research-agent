@@ -16,7 +16,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git config user.email "tusharkhoche@users.noreply.github.com"
-          git config user.name "tushark2111"
-          git remote add hf https://tushark2111:${HF_TOKEN}@huggingface.co/spaces/tushark2111/focused-research-agent
+          git config user.email "apekshamaddi22@gmail.com"
+          git config user.name "ApekshaMaddi"
+          git remote add hf https://ApekshaMaddi:${HF_TOKEN}@huggingface.co/spaces/ApekshaMaddi/focused-research-agent
           git push hf master:main --force
