@@ -21,13 +21,6 @@ pinned: false
 [![Tavily](https://img.shields.io/badge/Tavily-0.7.22-purple.svg)](https://tavily.com)
 [![Ollama](https://img.shields.io/badge/Ollama-0.6.2-black.svg)](https://ollama.com)
 [![uv](https://img.shields.io/badge/uv-package_manager-DE5FE9.svg)](https://docs.astral.sh/uv/)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-HuggingFace-yellow.svg)](https://tushark2111-focused-research-agent.hf.space)
-
-## 🚀 Live Demo
-
-**[Try it here → https://tushark2111-focused-research-agent.hf.space](https://tushark2111-focused-research-agent.hf.space)**
-
-No installation required. Ask a research question and watch the agent work.
 
 ---
 
